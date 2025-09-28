@@ -1,0 +1,66 @@
+{
+  "name": "mee-teacher-panel",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder -w"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "electron": "^38.1.2",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.mee.teacher.panel",
+    "productName": "MEE Teacher Panel",
+    "files": [
+      "main.js",
+      "public/**/*",
+      "package.json",
+      "run_script.cjs",
+      "runtime_test.cjs",
+      "test_compile.cjs",
+      "test_compile.js"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "icon": "build/MeeTeacherPanel.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "artifactName": "${productName}-Setup-${version}-${arch}.exe"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}-${arch}.exe"
+    },
+    "directories": {
+      "buildResources": "build"
+    }
+  },
+  "description": "Teacher control panel for Minecraft Education Edition",
+  "author": ""
+}

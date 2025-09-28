@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+
+# Build and distribution output
+dist/
+release/
+out/
+*.asar
+*.asar.unpacked/
+*.blockmap
+builder-debug.yml
+builder-effective-config.yaml
+
+# Test and coverage output
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Temporary files
+pids
+*.pid
+*.pid.lock
+*.seed
+*.tgz
+*.tmp
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Tool caches
+.eslintcache
+.stylelintcache
+.prettier-cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Editor and IDE folders
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.iml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+Icon?
+
+# Other temporary files
+*.swp
+*.swo
+*~
+tmp/
+temp/

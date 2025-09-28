@@ -1,0 +1,973 @@
+﻿<!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>MEE Teacher Panel</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+    }
+
+    body {
+      margin: 12px;
+      background: #fafafa;
+      color: #222;
+    }
+
+    .connect-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      z-index: 9999;
+      transition: opacity 250ms ease;
+    }
+
+    .connect-overlay.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .connect-window {
+      width: min(460px, 90vw);
+      color: #f5f5f5;
+      border: 4px solid #0d0d0d;
+      box-shadow: 0 0 0 2px #d0d0d0, 0 0 0 6px #111, 0 18px 28px rgba(0, 0, 0, 0.5);
+      background: #1e1e1e;
+      image-rendering: pixelated;
+      position: relative;
+    }
+
+    .connect-titlebar {
+      background: linear-gradient(#d9d9d9, #bdbdbd);
+      color: #202020;
+      padding: 8px 14px;
+      font-weight: 600;
+      font-size: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #0d0d0d;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    .connect-window-controls {
+      display: inline-flex;
+      gap: 6px;
+    }
+
+    .connect-window-controls span {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #202020;
+      background: #f5f5f5;
+      display: inline-block;
+    }
+
+    .connect-body {
+      padding: 32px 40px 48px;
+      text-align: center;
+      background-image:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.04) 25%, transparent 25%),
+        linear-gradient(225deg, rgba(255, 255, 255, 0.04) 25%, transparent 25%),
+        linear-gradient(45deg, rgba(0, 0, 0, 0.25) 25%, transparent 25%),
+        linear-gradient(315deg, rgba(0, 0, 0, 0.28) 25%, #3b3b3b 25%);
+      background-size: 40px 40px;
+      border-top: 2px solid #0d0d0d;
+      border-left: 2px solid #0d0d0d;
+      border-right: 2px solid #0d0d0d;
+    }
+
+    .connect-instruction {
+      font-size: 20px;
+      line-height: 1.5;
+      font-family: "Yu Gothic", "Meiryo", sans-serif;
+      margin-bottom: 28px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    .connect-command {
+      display: flex;
+      align-items: stretch;
+      border: 3px solid #0d0d0d;
+      background: #2b2b2b;
+      box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.35);
+    }
+
+    .connect-command-text {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 20px;
+      font-family: "Consolas", "Courier New", monospace;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .connect-copy-btn {
+      width: 66px;
+      border: none;
+      border-left: 3px solid #0d0d0d;
+      background: linear-gradient(#e8e8e8, #cfcfcf);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 120ms ease;
+      padding: 0;
+    }
+
+    .connect-copy-btn:active {
+      background: linear-gradient(#cfcfcf, #a9a9a9);
+    }
+
+    .connect-copy-btn span {
+      font-size: 24px;
+      color: #111;
+    }
+
+    .connect-copy-btn.copied span {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .connect-version {
+      position: absolute;
+      right: 16px;
+      bottom: 10px;
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.8);
+      font-family: "Consolas", "Courier New", monospace;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0 0 10px;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      margin: 8px 0;
+      flex-wrap: wrap;
+    }
+
+    button,
+    input {
+      font-size: 14px;
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 960px) {
+      .cols {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .card h2 {
+      font-size: 16px;
+      margin: 0 0 8px;
+    }
+
+    #roster {
+      max-height: 220px;
+      overflow: auto;
+      line-height: 1.4;
+    }
+
+    #chatlog {
+      max-height: 180px;
+      overflow: auto;
+      white-space: pre-wrap;
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 12px;
+    }
+
+    #map {
+      width: 100%;
+      height: 260px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      display: block;
+      background: #fff;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #map.dragging {
+      cursor: grabbing;
+    }
+
+    .map-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      font-size: 12px;
+      color: #555;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .map-footer button {
+      font-size: 12px;
+      padding: 2px 8px;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eee;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="connectOverlay" class="connect-overlay">
+    <div class="connect-window">
+      <div class="connect-titlebar">
+        <span>MEE 教師用パネル</span>
+        <div class="connect-window-controls">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+      <div class="connect-body">
+        <div class="connect-instruction">教育版 Minecraft で以下のコマンドを<br>入力してください</div>
+        <div class="connect-command">
+          <div id="connectCommandText" class="connect-command-text"></div>
+          <button id="connectCopyBtn" class="connect-copy-btn" type="button"><span>📋</span></button>
+        </div>
+      </div>
+      <div class="connect-version">v1.00</div>
+    </div>
+  </div>
+  <h1>MEE 教師用パネル</h1>
+  <div class="row">
+    <button id="pauseToggle">PAUSE ON（全員停止）</button>
+    <input id="allowName" placeholder="動けるようにするプレイヤー名">
+    <button id="allowBtn">許可</button>
+    <button id="gatherBtn">全員集合</button>
+    <button id="cameraItemsBtn">カメラ</button>
+    <button id="reviewItemsBtn">振り返り</button>
+    <button id="mayflyToggle">飛行能力</button>
+    <span id="status" class="pill">未接続</span>
+  </div>
+
+  <div class="cols">
+    <div class="card" style="margin-top:12px">
+      <h2>チャットログ</h2>
+      <div id="chatlog" class="muted">受信メッセージはここに表示されます。</div>
+      <div class="row">
+        <input id="chatMsg" placeholder="/say と同等のメッセージ" style="flex:1">
+        <button id="chatSend">送信</button>
+      </div>
+      <div class="muted">PlayerMessage イベントで生徒の発言も表示されます。</div>
+    </div>
+
+    <div class="card">
+      <h2>位置マップ</h2>
+      <canvas id="map"></canvas>
+      <div class="map-footer">
+        <span>ホイール：ズーム　ドラッグ：移動　表示は直近15秒のトレイルを描画します。</span>
+        <button id="mapReset">表示リセット</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>参加者名簿</h2>
+      <div id="roster" class="muted">接続待ち…</div>
+      <div class="muted">Join / Leave / Transform イベントを受信して自動更新します。</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const rosterEl = document.getElementById('roster');
+      const chatEl = document.getElementById('chatlog');
+      const mapCanvas = document.getElementById('map');
+      const statusEl = document.getElementById('status');
+      const pauseOverlay = document.getElementById('pauseOverlay');
+      const connectOverlay = document.getElementById('connectOverlay');
+      const connectCommandText = document.getElementById('connectCommandText');
+      const connectCopyBtn = document.getElementById('connectCopyBtn');
+      const CONNECT_COMMAND = '/connect 127.0.0.1:8080';
+      if (connectCommandText) connectCommandText.textContent = CONNECT_COMMAND;
+      const ctx = mapCanvas ? mapCanvas.getContext('2d') : null;
+
+      const state = { roster: [], chat: [], pauseOn: false, meeConnected: false };
+      const mapState = {
+        histories: new Map(),
+        view: {
+          scale: 1,
+          targetScale: 1,
+          centerX: 0,
+          centerZ: 0,
+          targetCenterX: 0,
+          targetCenterZ: 0,
+          autoFit: true,
+          initialized: false
+        },
+        pointer: { dragging: false, x: 0, y: 0 }
+      };
+
+      const chatDedup = { ids: new Set(), fallback: new Set() };
+      updateConnectionOverlay();
+
+      function updateConnectionOverlay() {
+        if (!connectOverlay) return;
+        connectOverlay.classList.toggle('hide', !!state.meeConnected);
+      }
+
+      if (connectCopyBtn) {
+        const iconSpan = connectCopyBtn.querySelector('span');
+        const resetCopyLabel = () => {
+          if (iconSpan) iconSpan.textContent = '📋';
+          connectCopyBtn.classList.remove('copied');
+        };
+        resetCopyLabel();
+        connectCopyBtn.addEventListener('click', async () => {
+          const text = CONNECT_COMMAND;
+          let copied = false;
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(text);
+              copied = true;
+            }
+          } catch (_) {
+            copied = false;
+          }
+          if (!copied) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            temp.setAttribute('readonly', '');
+            temp.style.position = 'fixed';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.select();
+            try {
+              copied = document.execCommand('copy');
+            } catch (_) {
+              copied = false;
+            }
+            document.body.removeChild(temp);
+          }
+          if (copied) {
+            if (iconSpan) iconSpan.textContent = 'コピー完了';
+            connectCopyBtn.classList.add('copied');
+            setTimeout(resetCopyLabel, 1600);
+          } else {
+            resetCopyLabel();
+            alert('クリップボードにコピーできませんでした。手動で入力してください。');
+          }
+        });
+      }
+
+      function chatKey(entry) {
+        if (!entry) return '';
+        const player = entry.player || '';
+        const message = entry.message || '';
+        const time = Number.isFinite(entry.t) ? entry.t : '';
+        return JSON.stringify([player, message, time]);
+      }
+
+      function resetChatDedup(entries) {
+        chatDedup.ids.clear();
+        chatDedup.fallback.clear();
+        if (!Array.isArray(entries)) return;
+        entries.forEach(entry => {
+          if (entry && entry.id) {
+            chatDedup.ids.add(entry.id);
+          } else if (entry) {
+            chatDedup.fallback.add(chatKey(entry));
+          }
+        });
+      }
+
+      function registerChatEntry(entry) {
+        if (!entry) return false;
+        if (entry.id) {
+          if (chatDedup.ids.has(entry.id)) return false;
+          chatDedup.ids.add(entry.id);
+        } else {
+          const key = chatKey(entry);
+          if (chatDedup.fallback.has(key)) return false;
+          chatDedup.fallback.add(key);
+        }
+        return true;
+      }
+
+      function removeChatEntry(entry) {
+        if (!entry) return;
+        if (entry.id) {
+          chatDedup.ids.delete(entry.id);
+        } else {
+          chatDedup.fallback.delete(chatKey(entry));
+        }
+      }
+
+      updatePauseOverlay(false);
+
+      const TRAIL_MAX_MS = 15000;
+      const MAX_HISTORY = 80;
+      const INTERP_LAG_MS = 120;
+      const ZOOM_MIN = 0.2;
+      const ZOOM_MAX = 8;
+      const AUTO_PAD = 40;
+
+      function setStatus(text, color) {
+        if (!statusEl) return;
+        statusEl.textContent = text;
+        statusEl.style.background = color || '#eee';
+      }
+
+      function updatePauseOverlay(active) {
+        if (!pauseOverlay) return;
+        pauseOverlay.classList.toggle('show', !!active);
+      }
+
+      function renderRoster() {
+        if (!rosterEl) return;
+        const rows = state.roster.map(p => {
+          const seen = Math.round((Date.now() - p.lastSeen) / 1000);
+          const pos = p.pos ? `(x:${Math.round(p.pos.x)}, z:${Math.round(p.pos.z)})` : '';
+          return `<div>• ${p.name} <span class="muted">last ${seen}s</span> ${pos}</div>`;
+        }).join('');
+        rosterEl.innerHTML = rows || '<div class="muted">プレイヤー未接続</div>';
+      }
+
+      function renderChat() {
+        if (!chatEl) return;
+        chatEl.textContent = state.chat.map(c => {
+          return `[${new Date(c.t).toLocaleTimeString()}] <${c.player}> ${c.message}`;
+        }).join('\n');
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
+
+      function updateMapHistories(roster) {
+        const now = Date.now();
+        const active = new Set();
+        roster.forEach(p => {
+          if (!p.pos) return;
+          let history = mapState.histories.get(p.name);
+          if (!history) { history = []; mapState.histories.set(p.name, history); }
+          const latest = history[history.length - 1];
+          const point = { t: now, x: p.pos.x, z: p.pos.z, y: Number.isFinite(p.pos.y) ? p.pos.y : null };
+          if (!latest || latest.x !== point.x || latest.z !== point.z) {
+            history.push(point);
+            if (history.length > MAX_HISTORY) history.shift();
+          } else {
+            latest.t = now;
+            latest.y = point.y;
+          }
+          while (history.length && now - history[0].t > TRAIL_MAX_MS) history.shift();
+          active.add(p.name);
+        });
+        for (const name of Array.from(mapState.histories.keys())) {
+          if (!active.has(name)) mapState.histories.delete(name);
+        }
+        if (mapState.view.autoFit) autoFitView();
+      }
+
+      function getLatestEntries() {
+        const list = [];
+        mapState.histories.forEach((history, name) => {
+          if (history.length) list.push({ name, ...history[history.length - 1] });
+        });
+        return list;
+      }
+
+      function ensureCanvasSize() {
+        if (!mapCanvas || !ctx) return { w: 0, h: 0 };
+        const w = mapCanvas.clientWidth || 1;
+        const h = mapCanvas.clientHeight || 1;
+        if (mapCanvas.width !== w || mapCanvas.height !== h) {
+          mapCanvas.width = w; mapCanvas.height = h;
+        }
+        return { w: mapCanvas.width, h: mapCanvas.height };
+      }
+
+      function autoFitView() {
+        if (!mapCanvas || !ctx) return;
+        const dims = ensureCanvasSize();
+        if (!dims.w || !dims.h) return;
+        const pts = getLatestEntries();
+        if (!pts.length) return;
+        let minX = pts[0].x, maxX = pts[0].x, minZ = pts[0].z, maxZ = pts[0].z;
+        pts.forEach(p => {
+          if (p.x < minX) minX = p.x;
+          if (p.x > maxX) maxX = p.x;
+          if (p.z < minZ) minZ = p.z;
+          if (p.z > maxZ) maxZ = p.z;
+        });
+        const spanX = Math.max(10, maxX - minX);
+        const spanZ = Math.max(10, maxZ - minZ);
+        const scaleX = (dims.w - AUTO_PAD * 2) / spanX;
+        const scaleZ = (dims.h - AUTO_PAD * 2) / spanZ;
+        const nextScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.min(scaleX, scaleZ)));
+        const view = mapState.view;
+        if (Number.isFinite(nextScale) && nextScale > 0) {
+          view.targetScale = nextScale;
+        }
+        view.targetCenterX = (minX + maxX) / 2;
+        view.targetCenterZ = (minZ + maxZ) / 2;
+        if (!view.initialized) {
+          view.scale = view.targetScale;
+          view.centerX = view.targetCenterX;
+          view.centerZ = view.targetCenterZ;
+          view.initialized = true;
+        }
+      }
+
+      function worldToScreen(x, z, dims) {
+        const scale = mapState.view.scale || 1;
+        return {
+          x: (x - mapState.view.centerX) * scale + dims.w / 2,
+          y: dims.h / 2 - (z - mapState.view.centerZ) * scale
+        };
+      }
+
+      function screenToWorld(sx, sy, dims) {
+        const scale = mapState.view.scale || 1;
+        return {
+          x: (sx - dims.w / 2) / scale + mapState.view.centerX,
+          z: (dims.h / 2 - sy) / scale + mapState.view.centerZ
+        };
+      }
+
+      function interpolatePosition(history, targetTime) {
+        if (!history.length) return null;
+        const latest = history[history.length - 1];
+        if (history.length === 1) return latest;
+        if (targetTime >= latest.t) {
+          const prev = history[history.length - 2];
+          const dt = latest.t - prev.t || 1;
+          const lead = Math.min(targetTime - latest.t, 1000);
+          const vx = (latest.x - prev.x) / dt;
+          const vz = (latest.z - prev.z) / dt;
+          return { x: latest.x + vx * lead, z: latest.z + vz * lead, y: latest.y, t: latest.t + lead };
+        }
+        for (let i = history.length - 1; i >= 0; i--) {
+          const curr = history[i];
+          if (curr.t <= targetTime || i === 0) {
+            const next = history[Math.min(i + 1, history.length - 1)];
+            if (next === curr) return curr;
+            const span = next.t - curr.t || 1;
+            const ratio = Math.max(0, Math.min(1, (targetTime - curr.t) / span));
+            return {
+              x: curr.x + (next.x - curr.x) * ratio,
+              z: curr.z + (next.z - curr.z) * ratio,
+              y: curr.y,
+              t: targetTime
+            };
+          }
+        }
+        return latest;
+      }
+
+      function colorHue(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+          hash = (hash * 31 + name.charCodeAt(i)) | 0;
+        }
+        return Math.abs(hash % 360);
+      }
+
+      function renderMapFrame() {
+        if (!mapCanvas || !ctx) { requestAnimationFrame(renderMapFrame); return; }
+        const dims = ensureCanvasSize();
+        if (!dims.w || !dims.h) { requestAnimationFrame(renderMapFrame); return; }
+
+        const view = mapState.view;
+        if (view.autoFit) {
+          const ease = 0.12;
+          view.scale += (view.targetScale - view.scale) * ease;
+          view.centerX += (view.targetCenterX - view.centerX) * ease;
+          view.centerZ += (view.targetCenterZ - view.centerZ) * ease;
+        } else {
+          view.targetScale = view.scale;
+          view.targetCenterX = view.centerX;
+          view.targetCenterZ = view.centerZ;
+        }
+        if (!Number.isFinite(view.scale) || view.scale <= 0) {
+          view.scale = ZOOM_MIN;
+        } else {
+          view.scale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, view.scale));
+        }
+        if (!Number.isFinite(view.targetScale) || view.targetScale <= 0) {
+          view.targetScale = view.scale;
+        } else {
+          view.targetScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, view.targetScale));
+        }
+
+        ctx.clearRect(0, 0, dims.w, dims.h);
+        const now = Date.now();
+        const renderTime = now - INTERP_LAG_MS;
+        const active = [];
+        mapState.histories.forEach((history, name) => {
+          const pos = interpolatePosition(history, renderTime);
+          if (pos) active.push({ name, pos, history });
+        });
+
+        if (!active.length) {
+          ctx.fillStyle = '#666';
+          ctx.font = '14px system-ui';
+          ctx.fillText('No position data', 10, 22);
+        } else {
+          ctx.strokeStyle = '#e0e0e0';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(0.5, 0.5, dims.w - 1, dims.h - 1);
+          ctx.beginPath();
+          ctx.moveTo(dims.w / 2, 0); ctx.lineTo(dims.w / 2, dims.h);
+          ctx.moveTo(0, dims.h / 2); ctx.lineTo(dims.w, dims.h / 2);
+          ctx.strokeStyle = 'rgba(200,200,200,0.6)';
+          ctx.stroke();
+          ctx.lineCap = 'round';
+
+          active.forEach(({ name, history }) => {
+            const hue = colorHue(name);
+            for (let i = 1; i < history.length; i++) {
+              const a = history[i - 1];
+              const b = history[i];
+              const age = Math.min(now - b.t, TRAIL_MAX_MS);
+              const alpha = Math.max(0, 1 - age / TRAIL_MAX_MS);
+              const p0 = worldToScreen(a.x, a.z, dims);
+              const p1 = worldToScreen(b.x, b.z, dims);
+              ctx.strokeStyle = `hsla(${hue},70%,55%,${0.15 + 0.45 * alpha})`;
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(p0.x, p0.y);
+              ctx.lineTo(p1.x, p1.y);
+              ctx.stroke();
+            }
+          });
+
+          active.forEach(({ name, pos }) => {
+            const hue = colorHue(name);
+            const pt = worldToScreen(pos.x, pos.z, dims);
+            ctx.fillStyle = `hsla(${hue},70%,55%,0.95)`;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(0,0,0,0.75)';
+            ctx.font = '12px system-ui';
+            ctx.fillText(name, pt.x + 8, pt.y - 6);
+          });
+        }
+        requestAnimationFrame(renderMapFrame);
+      }
+
+      requestAnimationFrame(renderMapFrame);
+
+      const es = new EventSource('/events');
+      es.onopen = () => {
+        setStatus('接続待ち', '#eef');
+        updatePauseOverlay(false);
+        refreshPauseButton();
+      };
+      es.onerror = () => {
+        setStatus('未接続', '#fdd');
+        state.meeConnected = false;
+        state.pauseOn = false;
+        updateConnectionOverlay();
+        updatePauseOverlay(false);
+        refreshPauseButton();
+      };
+      es.addEventListener('hello', () => { setStatus('接続待ち', '#eef'); updatePauseOverlay(false); });
+      es.addEventListener('state', ev => {
+        try {
+          const data = JSON.parse(ev.data);
+          state.roster = Array.isArray(data.roster) ? data.roster : [];
+          state.chat = Array.isArray(data.chat) ? data.chat : [];
+          resetChatDedup(state.chat);
+          state.pauseOn = !!data.pauseOn;
+          state.meeConnected = !!data.meeConnected;
+        } catch { return; }
+        if (state.meeConnected) {
+          setStatus(state.pauseOn ? 'PAUSE維持中' : '稼働中', state.pauseOn ? '#ffe8a3' : '#eef');
+        } else {
+          setStatus('接続待ち', '#fdd');
+        }
+        updateConnectionOverlay();
+        refreshPauseButton();
+        updatePauseOverlay(state.pauseOn && state.meeConnected);
+        renderRoster();
+        renderChat();
+        updateMapHistories(state.roster);
+      });
+      es.addEventListener('chat', ev => {
+        let entry;
+        try {
+          entry = JSON.parse(ev.data);
+        } catch {
+          return;
+        }
+        if (!registerChatEntry(entry)) return;
+        state.chat.push(entry);
+        if (state.chat.length > 100) {
+          const removed = state.chat.shift();
+          if (removed !== entry) removeChatEntry(removed);
+        }
+        renderChat();
+      });
+
+      if (mapCanvas) {
+        mapCanvas.addEventListener('pointerdown', ev => {
+          mapState.view.autoFit = false;
+          mapState.view.targetCenterX = mapState.view.centerX;
+          mapState.view.targetCenterZ = mapState.view.centerZ;
+          mapState.view.targetScale = mapState.view.scale || 1;
+          mapState.view.initialized = true;
+          mapState.pointer.dragging = true;
+          mapState.pointer.x = ev.clientX;
+          mapState.pointer.y = ev.clientY;
+          try { mapCanvas.setPointerCapture(ev.pointerId); } catch (_) { }
+          mapCanvas.classList.add('dragging');
+        });
+        mapCanvas.addEventListener('pointermove', ev => {
+          if (!mapState.pointer.dragging) return;
+          const dx = ev.clientX - mapState.pointer.x;
+          const dy = ev.clientY - mapState.pointer.y;
+          mapState.pointer.x = ev.clientX;
+          mapState.pointer.y = ev.clientY;
+          const scale = mapState.view.scale || 1;
+          mapState.view.centerX -= dx / scale;
+          mapState.view.centerZ += dy / scale;
+          mapState.view.targetCenterX = mapState.view.centerX;
+          mapState.view.targetCenterZ = mapState.view.centerZ;
+        });
+        const releasePointer = ev => {
+          if (!mapState.pointer.dragging) return;
+          mapState.pointer.dragging = false;
+          mapCanvas.classList.remove('dragging');
+          if (ev && ev.pointerId !== undefined) {
+            try { mapCanvas.releasePointerCapture(ev.pointerId); } catch (_) { }
+          }
+        };
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach(name => {
+          mapCanvas.addEventListener(name, releasePointer);
+        });
+        mapCanvas.addEventListener('wheel', ev => {
+          ev.preventDefault();
+          mapState.view.autoFit = false;
+          const dims = ensureCanvasSize();
+          if (!dims.w || !dims.h) return;
+          const factor = Math.exp(-ev.deltaY * 0.001);
+          const oldScale = mapState.view.scale || 1;
+          const newScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, oldScale * factor));
+          const rect = mapCanvas.getBoundingClientRect();
+          const sx = ev.clientX - rect.left;
+          const sy = ev.clientY - rect.top;
+          const before = screenToWorld(sx, sy, dims);
+          mapState.view.scale = newScale;
+          const after = screenToWorld(sx, sy, dims);
+          mapState.view.centerX += before.x - after.x;
+          mapState.view.centerZ += before.z - after.z;
+          mapState.view.targetScale = mapState.view.scale;
+          mapState.view.targetCenterX = mapState.view.centerX;
+          mapState.view.targetCenterZ = mapState.view.centerZ;
+          mapState.view.initialized = true;
+        }, { passive: false });
+      }
+
+      const mapReset = document.getElementById('mapReset');
+      if (mapReset) {
+        mapReset.addEventListener('click', () => {
+          mapState.view.autoFit = true;
+          mapState.view.initialized = false;
+          autoFitView();
+        });
+      }
+
+      async function post(path, body) {
+        try {
+          const res = await fetch(path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body ? JSON.stringify(body) : undefined
+          });
+          if (!res.ok) {
+            const detail = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${detail}`);
+          }
+          return true;
+        } catch (err) {
+          console.error('POST failed', err);
+          setStatus('送信エラー', '#fdd');
+          updatePauseOverlay(false);
+          return false;
+        }
+      }
+
+
+      const pauseToggleBtn = document.getElementById('pauseToggle');
+      let pauseSending = false;
+      const refreshPauseButton = () => {
+        if (!pauseToggleBtn) return;
+        if (pauseSending) {
+          pauseToggleBtn.textContent = '送信中…';
+          pauseToggleBtn.disabled = true;
+        } else if (state.pauseOn) {
+          pauseToggleBtn.textContent = 'PAUSE OFF（解除）';
+          pauseToggleBtn.disabled = false;
+        } else {
+          pauseToggleBtn.textContent = 'PAUSE ON（全員停止）';
+          pauseToggleBtn.disabled = false;
+        }
+      };
+      refreshPauseButton();
+      if (pauseToggleBtn) pauseToggleBtn.onclick = async () => {
+        if (pauseSending) return;
+        const nextPauseOn = !state.pauseOn;
+        pauseSending = true;
+        refreshPauseButton();
+        const ok = await post(nextPauseOn ? '/api/pause_on' : '/api/pause_off');
+        pauseSending = false;
+        if (!ok) {
+          refreshPauseButton();
+          alert(nextPauseOn ? 'PAUSE ON の送信に失敗しました。' : 'PAUSE OFF の送信に失敗しました。');
+          return;
+        }
+        state.pauseOn = nextPauseOn;
+        refreshPauseButton();
+      };
+      const allowBtn = document.getElementById('allowBtn');
+      if (allowBtn) allowBtn.onclick = async () => {
+        const input = document.getElementById('allowName');
+        const name = input ? input.value.trim() : '';
+        if (!name) return alert('プレイヤー名を入力してください');
+        const ok = await post('/api/allow_name', { name });
+        if (!ok) {
+          alert('許可リクエストの送信に失敗しました。');
+          return;
+        }
+        if (input) input.value = '';
+      };
+      const gatherBtn = document.getElementById('gatherBtn');
+      if (gatherBtn) {
+        const gatherDefault = gatherBtn.textContent;
+        gatherBtn.onclick = async () => {
+          gatherBtn.disabled = true;
+          gatherBtn.textContent = '送信中…';
+          const ok = await post('/api/gather');
+          gatherBtn.disabled = false;
+          gatherBtn.textContent = gatherDefault;
+          if (!ok) {
+            alert('全員集合コマンドの送信に失敗しました。');
+          }
+        };
+      }
+      const cameraItemsBtn = document.getElementById('cameraItemsBtn');
+      if (cameraItemsBtn) {
+        const defaultLabel = cameraItemsBtn.textContent;
+        cameraItemsBtn.onclick = async () => {
+          cameraItemsBtn.disabled = true;
+          cameraItemsBtn.textContent = '送信中';
+          const ok = await post('/api/camera_items');
+          cameraItemsBtn.disabled = false;
+          cameraItemsBtn.textContent = defaultLabel;
+          if (!ok) {
+            alert('カメラ配布の送信に失敗しました。');
+          }
+        };
+      }
+      const reviewItemsBtn = document.getElementById('reviewItemsBtn');
+      if (reviewItemsBtn) {
+        const defaultLabel = reviewItemsBtn.textContent;
+        reviewItemsBtn.onclick = async () => {
+          reviewItemsBtn.disabled = true;
+          reviewItemsBtn.textContent = '送信中';
+          const ok = await post('/api/review_items');
+          reviewItemsBtn.disabled = false;
+          reviewItemsBtn.textContent = defaultLabel;
+          if (!ok) {
+            alert('振り返りアイテム付与の送信に失敗しました。');
+          }
+        };
+      }
+
+      const mayflyBtn = document.getElementById('mayflyToggle');
+      if (mayflyBtn) {
+        let mayflyEnabled = false;
+        let sending = false;
+        const refreshMayflyLabel = () => {
+          if (sending) {
+            mayflyBtn.textContent = '送信中…';
+          } else {
+            mayflyBtn.textContent = mayflyEnabled ? '解除' : '飛行能力';
+          }
+          mayflyBtn.disabled = sending;
+        };
+        refreshMayflyLabel();
+        mayflyBtn.onclick = async () => {
+          if (sending) return;
+          const nextState = !mayflyEnabled;
+          sending = true;
+          refreshMayflyLabel();
+          const ok = await post('/api/mayfly', { enable: nextState });
+          sending = false;
+          if (!ok) {
+            refreshMayflyLabel();
+            alert(nextState ? '飛行能力の付与に失敗しました。' : '飛行能力の解除に失敗しました。');
+            return;
+          }
+          mayflyEnabled = nextState;
+          refreshMayflyLabel();
+        };
+      }
+      const chatSendBtn = document.getElementById('chatSend');
+      if (chatSendBtn) chatSendBtn.onclick = async () => {
+        const input = document.getElementById('chatMsg');
+        const msg = input ? input.value.trim() : '';
+        if (!msg) return;
+        const ok = await post('/api/chat_send', { message: msg });
+        if (!ok) {
+          alert('チャット送信に失敗しました。');
+          return;
+        }
+        if (input) input.value = '';
+      };
+
+      window.addEventListener('unhandledrejection', (ev) => {
+        ev.preventDefault();
+        console.error('Unhandled promise rejection', ev.reason);
+        setStatus('送信エラー', '#fdd');
+        updatePauseOverlay(false);
+      });
+
+    })();
+  </script>
+</body>
+
+</html>
