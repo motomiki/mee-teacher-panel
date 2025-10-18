@@ -203,6 +203,11 @@ httpApp.post('/api/camera_items', (_req, res) => {
   res.json({ ok: true });
 });
 
+httpApp.post('/api/kill_mob_r50', (_req, res) => {
+  sendCommand('kill @e[type=!player,type=!item,r=50]');
+  res.json({ ok: true });
+});
+
 httpApp.post('/api/mayfly', (req, res) => {
   const enable = !!req.body?.enable;
   sendCommand(`ability @s mayfly ${enable ? 'true' : 'false'}`);
