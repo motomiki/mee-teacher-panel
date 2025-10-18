@@ -279,6 +279,7 @@
     <button id="cameraItemsBtn">カメラ</button>
     <button id="reviewItemsBtn">振り返り</button>
     <button id="mayflyToggle">飛行能力</button>
+    <button id="killMobBtn">モブ削除（半径50）</button>
     <span id="status" class="pill">未接続</span>
   </div>
 
@@ -913,6 +914,20 @@
           reviewItemsBtn.textContent = defaultLabel;
           if (!ok) {
             alert('振り返りアイテム付与の送信に失敗しました。');
+          }
+        };
+      }
+      const killMobBtn = document.getElementById('killMobBtn');
+      if (killMobBtn) {
+        const defaultLabel = killMobBtn.textContent;
+        killMobBtn.onclick = async () => {
+          killMobBtn.disabled = true;
+          killMobBtn.textContent = '送信中…';
+          const ok = await post('/api/kill_mob_r50');
+          killMobBtn.disabled = false;
+          killMobBtn.textContent = defaultLabel;
+          if (!ok) {
+            alert('モブ削除コマンドの送信に失敗しました。');
           }
         };
       }
