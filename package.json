@@ -46,7 +46,7 @@
         }
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
-      "icon": "build/MeeTeacherPanel.ico"
+      "icon": "build/icons/mee-teacher-panel.ico"
     },
     "nsis": {
       "oneClick": true,
