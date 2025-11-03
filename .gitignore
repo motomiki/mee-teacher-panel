@@ -67,3 +67,6 @@ temp/
 # Test scripts
 *test*.cjs
 *test*.js
+
+# Documentation
+AGENTS.md
