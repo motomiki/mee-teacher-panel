@@ -276,6 +276,8 @@
     <input id="allowName" placeholder="動けるようにするプレイヤー名">
     <button id="allowBtn">許可</button>
     <button id="gatherBtn">全員集合</button>
+    <input id="gatherName" placeholder="集合させるプレイヤー名">
+    <button id="gatherOneBtn">個別集合</button>
     <button id="cameraItemsBtn">カメラ</button>
     <button id="reviewItemsBtn">振り返り</button>
     <button id="mayflyToggle">飛行能力</button>
@@ -887,6 +889,28 @@
           if (!ok) {
             alert('全員集合コマンドの送信に失敗しました。');
           }
+        };
+      }
+      const gatherOneBtn = document.getElementById('gatherOneBtn');
+      if (gatherOneBtn) {
+        const gatherOneInput = document.getElementById('gatherName');
+        const gatherOneDefault = gatherOneBtn.textContent;
+        gatherOneBtn.onclick = async () => {
+          const name = gatherOneInput ? gatherOneInput.value.trim() : '';
+          if (!name) {
+            alert('集合させるプレイヤー名を入力してください。');
+            return;
+          }
+          gatherOneBtn.disabled = true;
+          gatherOneBtn.textContent = '送信中';
+          const ok = await post('/api/gather_name', { name });
+          gatherOneBtn.disabled = false;
+          gatherOneBtn.textContent = gatherOneDefault;
+          if (!ok) {
+            alert('個別集合コマンドの送信に失敗しました。');
+            return;
+          }
+          if (gatherOneInput) gatherOneInput.value = '';
         };
       }
       const cameraItemsBtn = document.getElementById('cameraItemsBtn');
