@@ -192,6 +192,13 @@ httpApp.post('/api/gather', (_req, res) => {
   res.json({ ok: true });
 });
 
+httpApp.post('/api/gather_name', (req, res) => {
+  const name = req.body?.name;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  sendCommand(`tp "${name}" @s`);
+  res.json({ ok: true });
+});
+
 httpApp.post('/api/review_items', (_req, res) => {
   sendCommand('give @a writable_book 1');
   res.json({ ok: true });
