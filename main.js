@@ -1,5 +1,5 @@
 ﻿// main.js  (ESM)
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, shell, dialog } from 'electron';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,6 +9,22 @@ import crypto from 'crypto';
 import { Worker } from 'worker_threads';
 import { fileURLToPath } from 'url';
 import { listWorlds, worldsDir, readLevelInfo, renderWorldMap, renderWorldMapAuto } from './worldmap.js';
+
+// 二重起動するとポート 3000/8080 が衝突するため、2 つ目は既存ウィンドウを前面に出して即終了する
+// （app.quit() は非同期で、この後のサーバー起動コードまで走ってしまうので process.exit を使う）
+if (!app.requestSingleInstanceLock()) {
+  process.exit(0);
+}
+
+// ポートが他のアプリに使われている場合は、未処理例外ではなく分かりやすいメッセージを出して終了する
+function handleListenError(err, port) {
+  const msg = err.code === 'EADDRINUSE'
+    ? `ポート ${port} が他のアプリで使用中のため起動できません。\nそのアプリを終了してから、もう一度起動してください。`
+    : `ポート ${port} で待ち受けを開始できませんでした。\n${err.message}`;
+  console.error(`[listen] port ${port}`, err);
+  dialog.showErrorBox('MEE Teacher Panel を起動できません', msg);
+  app.exit(1);
+}
 
 /* =========================
    サーバ状態（インメモリ管理）
@@ -618,7 +634,10 @@ httpApp.post('/api/worldmap', async (req, res) => {
    ========================= */
 const HTTP_PORT = 3000;
 // 待ち受けはこの PC だけに限る（校内 LAN の他の PC から操作されないように）
-httpApp.listen(HTTP_PORT, '127.0.0.1', () => console.log(`UI http://127.0.0.1:${HTTP_PORT}`));
+httpApp.listen(HTTP_PORT, '127.0.0.1', (err) => {
+  if (err) return handleListenError(err, HTTP_PORT);
+  console.log(`UI http://127.0.0.1:${HTTP_PORT}`);
+});
 
 /* =========================
    WebSocket接続（MEE から /connect）
@@ -626,6 +645,7 @@ httpApp.listen(HTTP_PORT, '127.0.0.1', () => console.log(`UI http://127.0.0.1:${
 const WS_PORT = 8080;
 // 他の PC の MEE から /connect されて接続を奪われないよう、この PC からの接続だけ受ける
 const wss = new WebSocketServer({ port: WS_PORT, host: '127.0.0.1' });
+wss.on('error', (err) => handleListenError(err, WS_PORT));
 wss.on('connection', (ws) => {
   meeSocket = ws;
   meeLink = { state: 'handshake', queue: [], cipher: null, decipher: null };
@@ -1067,6 +1087,13 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+});
+// 2 回目の起動時は、既存のウィンドウを前面に出す
+app.on('second-instance', () => {
+  const win = BrowserWindow.getAllWindows()[0];
+  if (!win) { if (app.isReady()) createWindow(); return; }
+  if (win.isMinimized()) win.restore();
+  win.focus();
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 
