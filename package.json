@@ -1,6 +1,6 @@
 {
   "name": "mee-teacher-panel",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "main": "main.js",
   "scripts": {
@@ -22,12 +22,9 @@
     "productName": "MEE Teacher Panel",
     "files": [
       "main.js",
+      "worldmap.js",
       "public/**/*",
-      "package.json",
-      "run_script.cjs",
-      "runtime_test.cjs",
-      "test_compile.cjs",
-      "test_compile.js"
+      "package.json"
     ],
     "asar": true,
     "win": {

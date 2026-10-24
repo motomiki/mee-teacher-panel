@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <title>振り返り（本と羽根ペン）</title>
+  <path fill="#1b1d22" d="M12 0h2v1h-2zM11 1h1v1h-1zM14 1h1v1h-1zM10 2h1v1h-1zM14 2h1v1h-1zM9 3h1v1h-1zM13 3h1v1h-1zM8 4h1v1h-1zM12 4h1v1h-1zM7 5h1v1h-1zM11 5h1v1h-1zM6 6h1v1h-1zM10 6h1v1h-1zM5 7h1v1h-1zM7 7h3v1h-3zM4 8h1v1h-1zM6 8h1v1h-1zM1 9h15v1h-15zM1 10h1v1h-1zM8 10h1v1h-1zM15 10h1v1h-1zM1 11h1v1h-1zM8 11h1v1h-1zM15 11h1v1h-1zM1 12h1v1h-1zM8 12h1v1h-1zM15 12h1v1h-1zM1 13h1v1h-1zM8 13h1v1h-1zM15 13h1v1h-1zM1 14h1v1h-1zM8 14h1v1h-1zM15 14h1v1h-1zM2 15h6v1h-6zM9 15h6v1h-6z"/>
+  <path fill="#ffffff" d="M12 1h2v1h-2zM11 2h2v1h-2zM10 3h2v1h-2zM9 4h2v1h-2zM8 5h2v1h-2zM7 6h1v1h-1z"/>
+  <path fill="#c9d1dc" d="M13 2h1v1h-1zM12 3h1v1h-1zM11 4h1v1h-1zM10 5h1v1h-1zM8 6h2v1h-2z"/>
+  <path fill="#4b5361" d="M6 7h1v1h-1zM5 8h1v1h-1z"/>
+  <path fill="#f6ead0" d="M2 10h6v1h-6zM9 10h6v1h-6zM2 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1zM14 11h1v1h-1zM2 12h6v1h-6zM9 12h6v1h-6zM2 13h1v1h-1zM6 13h2v1h-2zM9 13h1v1h-1zM13 13h2v1h-2z"/>
+  <path fill="#cdb27a" d="M3 11h4v1h-4zM10 11h4v1h-4zM3 13h3v1h-3zM10 13h3v1h-3z"/>
+  <path fill="#5e3a1a" d="M2 14h6v1h-6zM9 14h6v1h-6z"/>
+</svg>

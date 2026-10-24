@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <title>接続待ち</title>
+  <path fill="#1b1d22" d="M5 2h6v1h-6zM3 3h2v1h-2zM11 3h2v1h-2zM3 4h1v1h-1zM12 4h1v1h-1zM2 5h1v1h-1zM13 5h1v1h-1zM2 6h1v1h-1zM13 6h1v1h-1zM2 7h1v1h-1zM13 7h1v1h-1zM2 8h1v1h-1zM13 8h1v1h-1zM2 9h1v1h-1zM13 9h1v1h-1zM2 10h1v1h-1zM13 10h1v1h-1zM3 11h1v1h-1zM12 11h1v1h-1zM3 12h2v1h-2zM11 12h2v1h-2zM5 13h6v1h-6z"/>
+  <path fill="#ffd84d" d="M5 3h6v1h-6zM4 4h1v1h-1zM7 4h5v1h-5zM3 5h1v1h-1zM6 5h7v1h-7zM3 6h1v1h-1zM5 6h8v1h-8zM3 7h10v1h-10zM3 8h9v1h-9zM3 9h9v1h-9zM3 10h8v1h-8zM5 11h5v1h-5z"/>
+  <path fill="#ffffff" d="M5 4h2v1h-2zM4 5h2v1h-2zM4 6h1v1h-1z"/>
+  <path fill="#c99a10" d="M12 8h1v1h-1zM12 9h1v1h-1zM11 10h2v1h-2zM4 11h1v1h-1zM10 11h2v1h-2zM5 12h6v1h-6z"/>
+</svg>

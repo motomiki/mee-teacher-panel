@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <title>カメラ</title>
+  <path fill="#1b1d22" d="M2 2h6v1h-6zM11 2h3v1h-3zM2 3h1v1h-1zM7 3h1v1h-1zM11 3h1v1h-1zM13 3h1v1h-1zM1 4h14v1h-14zM1 5h1v1h-1zM14 5h1v1h-1zM1 6h1v1h-1zM6 6h4v1h-4zM14 6h1v1h-1zM1 7h1v1h-1zM5 7h1v1h-1zM10 7h1v1h-1zM14 7h1v1h-1zM1 8h1v1h-1zM4 8h1v1h-1zM11 8h1v1h-1zM14 8h1v1h-1zM1 9h1v1h-1zM4 9h1v1h-1zM11 9h1v1h-1zM14 9h1v1h-1zM1 10h1v1h-1zM4 10h1v1h-1zM11 10h1v1h-1zM14 10h1v1h-1zM1 11h1v1h-1zM5 11h1v1h-1zM10 11h1v1h-1zM14 11h1v1h-1zM1 12h1v1h-1zM6 12h4v1h-4zM14 12h1v1h-1zM1 13h14v1h-14z"/>
+  <path fill="#4b5361" d="M3 3h4v1h-4z"/>
+  <path fill="#ffd84d" d="M12 3h1v1h-1z"/>
+  <path fill="#ffffff" d="M2 5h1v1h-1z"/>
+  <path fill="#c9d1dc" d="M3 5h11v1h-11zM2 6h4v1h-4zM10 6h4v1h-4zM2 7h3v1h-3zM11 7h3v1h-3zM2 8h2v1h-2zM12 8h2v1h-2z"/>
+  <path fill="#4aa3ff" d="M6 7h2v1h-2zM5 8h4v1h-4zM10 8h1v1h-1zM6 9h5v1h-5zM7 10h4v1h-4z"/>
+  <path fill="#bfe9ff" d="M8 7h2v1h-2zM9 8h1v1h-1z"/>
+  <path fill="#8a94a3" d="M2 9h2v1h-2zM12 9h2v1h-2zM2 10h2v1h-2zM12 10h2v1h-2zM2 11h3v1h-3zM11 11h3v1h-3zM2 12h4v1h-4zM10 12h4v1h-4z"/>
+  <path fill="#1f62c4" d="M5 9h1v1h-1zM5 10h2v1h-2zM6 11h4v1h-4z"/>
+</svg>

@@ -7,6 +7,2542 @@
   <style>
     :root {
       font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+      --bg: #eef1f5;
+      --surface: #fff;
+      --border: #dde2e8;
+      --text: #1f2933;
+      --muted: #6b7682;
+      --accent: #2f6fde;
+      --accent-soft: #e6eefc;
+      --warn-bg: #ffd84d;
+      --warn-text: #4a3b00;
+      --danger: #c94040;
+      --danger-soft: #fdeeee;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 接続待ちダイアログ：ドット絵のレトロ PC ウィンドウ風 */
+    .connect-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 14, 18, 0.72);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 9999;
+      transition: opacity 250ms ease;
+    }
+
+    .connect-overlay.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* clip-path を掛けると影まで切れるので、影は外側の要素で付ける */
+    .connect-shadow {
+      width: min(480px, 100%);
+      filter: drop-shadow(6px 6px 0 rgba(0, 0, 0, 0.5));
+    }
+
+    .connect-window {
+      --cw-face: #c6c6c6;
+      --cw-hi: #ffffff;
+      --cw-lo: #555555;
+      --cw-ink: #1b1d22;
+      --cw-body: #2b2d33;
+      background: var(--cw-face);
+      color: var(--cw-ink);
+      border: 2px solid var(--cw-ink);
+      box-shadow: inset 2px 2px 0 var(--cw-hi), inset -2px -2px 0 var(--cw-lo);
+      padding: 4px;
+      /* 四隅を 1 ドット欠けさせる */
+      clip-path: polygon(2px 0, calc(100% - 2px) 0, calc(100% - 2px) 2px, 100% 2px, 100% calc(100% - 2px),
+          calc(100% - 2px) calc(100% - 2px), calc(100% - 2px) 100%, 2px 100%, 2px calc(100% - 2px),
+          0 calc(100% - 2px), 0 2px, 2px 2px);
+    }
+
+    .connect-window img {
+      image-rendering: pixelated;
+      display: block;
+    }
+
+    .connect-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 30px;
+      padding: 0 4px;
+    }
+
+    .connect-logo {
+      width: 20px;
+      height: 20px;
+      flex: none;
+    }
+
+    .connect-stripes {
+      flex: 1;
+      min-width: 8px;
+      height: 14px;
+      background: repeating-linear-gradient(to bottom, #8b8b8b 0 2px, transparent 2px 4px);
+    }
+
+    .connect-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .connect-lamp {
+      width: 16px;
+      height: 16px;
+      flex: none;
+      animation: connect-blink 1.2s steps(1) infinite;
+    }
+
+    .connect-lamp.ok {
+      animation: none;
+    }
+
+    .cw-btn {
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      cursor: pointer;
+      background: var(--cw-face);
+      color: var(--cw-ink);
+    }
+
+    .cw-btn:focus-visible {
+      outline: 2px solid #ffd84d;
+      outline-offset: -6px;
+    }
+
+    .connect-help-btn {
+      width: 22px;
+      height: 22px;
+      flex: none;
+      background: none;
+    }
+
+    .connect-help-btn img {
+      width: 22px;
+      height: 22px;
+    }
+
+    .connect-help-btn:active img,
+    .connect-help-btn[aria-expanded="false"] img {
+      transform: translate(1px, 1px);
+      filter: brightness(0.85);
+    }
+
+    .connect-body {
+      margin-top: 4px;
+      padding: 22px 26px 18px;
+      color: #f2f2f2;
+      background-color: var(--cw-body);
+      /* 2px 角の市松でごく弱いディザ模様 */
+      background-image: conic-gradient(rgba(255, 255, 255, 0.035) 25%, transparent 0 50%, rgba(255, 255, 255, 0.035) 0 75%, transparent 0);
+      background-size: 4px 4px;
+      border: 2px solid var(--cw-ink);
+      box-shadow: inset 2px 2px 0 #16171b, inset -2px -2px 0 #3c3f47;
+    }
+
+    .connect-heading {
+      margin: 0 0 14px;
+      font-size: 19px;
+      font-weight: 700;
+      text-align: center;
+      text-shadow: 2px 2px 0 #000;
+    }
+
+    .connect-steps {
+      list-style: none;
+      margin: 0 0 16px;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .connect-steps[hidden] {
+      display: none;
+    }
+
+    .connect-steps li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .connect-step-no {
+      flex: none;
+      width: 22px;
+      height: 22px;
+      display: inline-grid;
+      place-items: center;
+      font: 800 13px "Consolas", "Courier New", monospace;
+      color: #10230a;
+      background: #5bbf3a;
+      border: 1px solid #000;
+      box-shadow: inset 2px 2px 0 #8be36a, inset -2px -2px 0 #2f7d1f;
+    }
+
+    .connect-steps kbd {
+      display: inline-block;
+      padding: 0 6px;
+      margin: 0 2px;
+      font: 700 12px "Consolas", "Courier New", monospace;
+      color: var(--cw-ink);
+      background: var(--cw-face);
+      border: 1px solid #000;
+      box-shadow: inset 1px 1px 0 var(--cw-hi), inset -1px -2px 0 var(--cw-lo);
+    }
+
+    .connect-command {
+      display: flex;
+      align-items: stretch;
+      background: #121317;
+      border: 2px solid #000;
+      box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #3c3f47;
+    }
+
+    .connect-command-text {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 14px;
+      font: 600 19px "Consolas", "Courier New", monospace;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      overflow: hidden;
+      user-select: all;
+    }
+
+    .connect-copy-btn {
+      flex: none;
+      min-width: 112px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 0 12px;
+      font-size: 13px;
+      font-weight: 700;
+      border-left: 2px solid #000;
+      box-shadow: inset 2px 2px 0 var(--cw-hi), inset -2px -2px 0 var(--cw-lo);
+    }
+
+    .connect-copy-btn:hover {
+      background: #d6d6d6;
+    }
+
+    .connect-copy-btn:active {
+      box-shadow: inset 2px 2px 0 var(--cw-lo), inset -2px -2px 0 var(--cw-hi);
+      padding-top: 2px;
+    }
+
+    .connect-copy-btn.copied {
+      background: #c9f0b8;
+    }
+
+    .connect-copy-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .connect-waiting {
+      margin-top: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #c9d1dc;
+    }
+
+    .connect-dots {
+      display: inline-flex;
+      gap: 4px;
+    }
+
+    .connect-dots i {
+      width: 4px;
+      height: 4px;
+      background: #ffd84d;
+      animation: connect-blink 1.2s steps(1) infinite;
+    }
+
+    .connect-dots i:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .connect-dots i:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes connect-blink {
+      50% {
+        opacity: 0.25;
+      }
+    }
+
+    .connect-statusbar {
+      margin-top: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 8px;
+      font: 12px "Consolas", "Courier New", monospace;
+      color: #3a3d44;
+      box-shadow: inset 1px 1px 0 var(--cw-lo), inset -1px -1px 0 var(--cw-hi);
+    }
+
+    .connect-version {
+      font-weight: 700;
+      color: var(--cw-ink);
+    }
+
+    @media (max-width: 420px) {
+      .connect-body {
+        padding: 18px 14px 14px;
+      }
+
+      .connect-command-text {
+        font-size: 15px;
+        padding: 10px 8px;
+      }
+
+      .connect-copy-btn {
+        min-width: 0;
+      }
+
+      .connect-copy-label {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .connect-lamp,
+      .connect-dots i {
+        animation: none;
+      }
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      margin: 8px 0;
+      flex-wrap: wrap;
+    }
+
+    button,
+    input,
+    select {
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: background 120ms ease, border-color 120ms ease, transform 60ms ease;
+    }
+
+    button:not(.cw-btn):hover:not(:disabled) {
+      background: #f3f6fa;
+      border-color: #c3ccd6;
+    }
+
+    button:not(.cw-btn):active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    input[type="text"],
+    input:not([type]),
+    select {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    /* ---------- ヘッダー ---------- */
+    .app-header {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 46px;
+      padding: 0 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      transition: background 200ms ease;
+    }
+
+    .app-header h1 {
+      font-size: 17px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .pause-banner {
+      display: none;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    body.paused .app-header {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    body.paused .pause-banner {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .app-header .spacer {
+      flex: 1;
+    }
+
+    .app-header .pill {
+      font-size: 13px;
+      padding: 4px 12px;
+      font-weight: 600;
+    }
+
+    .app-header .pill::before {
+      content: "●";
+      margin-right: 6px;
+      font-size: 10px;
+      opacity: 0.7;
+    }
+
+    /* ---------- 本体（3カラム） ---------- */
+    .app {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr) 320px;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    @media (max-width: 1100px) {
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        grid-template-columns: 180px minmax(0, 1fr);
+        grid-auto-rows: minmax(420px, auto);
+      }
+
+      .side-right {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: var(--surface);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      min-height: 0;
+    }
+
+    .card h2 {
+      font-size: 14px;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .count {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 999px;
+      padding: 0 8px;
+    }
+
+    /* ---------- 左：操作 ---------- */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: auto;
+    }
+
+    .controls h3 {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin: 10px 0 2px;
+    }
+
+    .controls h3:first-child {
+      margin-top: 0;
+    }
+
+    .controls button {
+      width: 100%;
+      text-align: left;
+      padding: 8px 10px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ドット絵アイコン（public/icons/*.svg） */
+    .ico {
+      width: 18px;
+      height: 18px;
+      flex: none;
+      image-rendering: pixelated;
+    }
+
+    .controls button .sub {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    #pauseToggle {
+      justify-content: center;
+      padding: 12px 10px;
+      font-size: 15px;
+      font-weight: 700;
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    #pauseToggle:hover:not(:disabled) {
+      background: #2560c4;
+    }
+
+    body.paused #pauseToggle {
+      background: var(--warn-bg);
+      border-color: #e0b800;
+      color: var(--warn-text);
+    }
+
+    .controls button.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .controls button.danger:hover:not(:disabled) {
+      background: var(--danger-soft);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* ---------- 中央：マップ ---------- */
+    .map-card {
+      display: flex;
+      flex-direction: column;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: block;
+      background: #fff;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #map.dragging {
+      cursor: grabbing;
+    }
+
+    .map-footer {
+      flex: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .map-footer button {
+      font-size: 12px;
+      padding: 2px 8px;
+    }
+
+    .map-toolbar {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .map-toolbar h2 {
+      margin: 0 8px 0 0;
+      color: var(--text);
+    }
+
+    .map-toolbar label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .map-toolbar select,
+    .map-toolbar button {
+      font-size: 12px;
+      padding: 3px 8px;
+    }
+
+    .map-toolbar input[type="range"] {
+      width: 90px;
+    }
+
+    .map-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 200px;
+    }
+
+    /* ---------- 右：名簿・チャット ---------- */
+    .side-right {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 0;
+    }
+
+    .roster-card {
+      flex: 0 1 auto;
+      max-height: 45%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #roster {
+      overflow: auto;
+      min-height: 0;
+    }
+
+    .roster-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 4px;
+      border-bottom: 1px solid #f0f2f5;
+    }
+
+    .roster-row:last-child {
+      border-bottom: none;
+    }
+
+    .roster-row.stale {
+      opacity: 0.5;
+    }
+
+    .roster-row .who {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .roster-row .name {
+      font-weight: 600;
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .roster-row .meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .roster-row.teacher .name::before {
+      content: "★ ";
+      color: #e0a100;
+    }
+
+    .roster-row button {
+      flex: none;
+      font-size: 12px;
+      padding: 3px 8px;
+    }
+
+    .chat-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 160px;
+    }
+
+    #chatlog {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.5;
+      background: #f7f9fb;
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+
+    .chat-input {
+      flex: none;
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .map-tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: rgba(20, 20, 20, 0.88);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.45;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: pre;
+      z-index: 2;
+    }
+
+    .map-tooltip.hide,
+    .calib-overlay.hide,
+    .calib-mark.hide {
+      display: none;
+    }
+
+    .calib-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 9000;
+    }
+
+    .calib-window {
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      width: min(960px, 100%);
+      max-height: 100%;
+      overflow: auto;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    .calib-window h2 {
+      font-size: 16px;
+      margin: 0 0 8px;
+    }
+
+    .calib-stage {
+      position: relative;
+      display: inline-block;
+      max-width: 100%;
+      margin: 8px 0;
+      background: #f0f0f0;
+    }
+
+    .calib-stage img {
+      display: block;
+      max-width: 100%;
+      max-height: 55vh;
+      cursor: crosshair;
+    }
+
+    .calib-mark {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      margin: -11px 0 0 -11px;
+      border-radius: 50%;
+      background: #e53935;
+      border: 2px solid #fff;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .calib-mark.b {
+      background: #1e6fff;
+    }
+
+    .calib-coords input[type="number"] {
+      width: 80px;
+    }
+
+    .muted {
+      color: #666;
+      font-size: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eee;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="connectOverlay" class="connect-overlay">
+    <div class="connect-shadow">
+      <div class="connect-window" role="dialog" aria-labelledby="connectTitle">
+        <div class="connect-titlebar">
+          <img class="connect-logo" src="icons/logo.svg" alt="">
+          <span class="connect-stripes"></span>
+          <span id="connectTitle" class="connect-title">MEE 教師用パネル</span>
+          <span class="connect-stripes"></span>
+          <img id="connectLamp" class="connect-lamp" src="icons/lamp-wait.svg" alt="接続待ち" title="接続待ち">
+          <button id="connectHelpBtn" class="cw-btn connect-help-btn" type="button" aria-expanded="true" aria-controls="connectSteps" title="手順の表示／非表示"><img src="icons/help.svg" alt="手順"></button>
+        </div>
+        <div class="connect-body">
+          <h2 class="connect-heading">教育版 Minecraft と接続します</h2>
+          <ol id="connectSteps" class="connect-steps">
+            <li><span class="connect-step-no">1</span>教育版 Minecraft でワールドを開く</li>
+            <li><span class="connect-step-no">2</span><kbd>T</kbd>キーでチャットを開き、下のコマンドを入力</li>
+            <li><span class="connect-step-no">3</span>接続されると、この画面は自動で閉じます</li>
+          </ol>
+          <div class="connect-command">
+            <code id="connectCommandText" class="connect-command-text"></code>
+            <button id="connectCopyBtn" class="cw-btn connect-copy-btn" type="button" title="コマンドをコピー"><img src="icons/clipboard.svg" alt=""><span class="connect-copy-label">コピー</span></button>
+          </div>
+          <div class="connect-waiting" role="status">接続を待っています<span class="connect-dots"><i></i><i></i><i></i></span></div>
+        </div>
+        <div class="connect-statusbar">
+          <span>MEE Teacher Panel</span>
+          <span id="appVersion" class="connect-version"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="worldMapOverlay" class="calib-overlay hide">
+    <div class="calib-window" style="width:min(520px,100%)">
+      <h2>ワールドから背景地図を生成</h2>
+      <div class="muted">この PC に保存されているワールドのデータを読み、真上から見た地図を作ります。位置合わせは不要です。授業中に建てたものは、ゲームの自動保存の後に生成し直すと反映されます。<br>地図の白い部分は、ゲームがまだ保存していない場所です。ワールドを一度終了するか、自動保存の後に生成し直すと広がります。</div>
+      <div class="row" style="margin-top:8px">
+        <label>ワールド <select id="worldMapWorld" style="max-width:300px"></select></label>
+      </div>
+      <div class="row">
+        <label>範囲
+          <select id="worldMapSize">
+            <option value="auto" selected>自動（保存済みの地形すべて・最大2048）</option>
+            <option value="256">256×256 ブロック</option>
+            <option value="512">512×512 ブロック</option>
+            <option value="1024">1024×1024 ブロック</option>
+            <option value="2048">2048×2048 ブロック（時間がかかります）</option>
+          </select>
+        </label>
+        <label>中心
+          <select id="worldMapCenter">
+            <option value="teacher">先生の現在地</option>
+            <option value="spawn">ワールドのスポーン地点</option>
+          </select>
+        </label>
+      </div>
+      <div id="worldMapStatus" class="muted"></div>
+      <div class="row">
+        <button id="worldMapRun" type="button">生成して使う</button>
+        <button id="worldMapCancel" type="button">閉じる</button>
+      </div>
+    </div>
+  </div>
+  <div id="calibOverlay" class="calib-overlay hide">
+    <div class="calib-window">
+      <h2>背景画像の位置合わせ</h2>
+      <div class="row">
+        <input id="calibFile" type="file" accept="image/png,image/jpeg,image/webp">
+        <input id="calibName" placeholder="背景の名前（例：村のワールド）" style="flex:1">
+      </div>
+      <div id="calibHint" class="muted"></div>
+      <div class="calib-stage">
+        <img id="calibImg" alt="">
+        <div id="calibMarkA" class="calib-mark hide">A</div>
+        <div id="calibMarkB" class="calib-mark b hide">B</div>
+      </div>
+      <div class="row calib-coords">
+        <button id="calibPickA" type="button">点Aを指定</button>
+        x <input id="calibAx" type="number" step="any"> z <input id="calibAz" type="number" step="any">
+        <button id="calibPickB" type="button">点Bを指定</button>
+        x <input id="calibBx" type="number" step="any"> z <input id="calibBz" type="number" step="any">
+      </div>
+      <div id="calibCheck" class="muted"></div>
+      <div class="row">
+        <button id="calibSave" type="button">保存して使う</button>
+        <button id="calibCancel" type="button">キャンセル</button>
+      </div>
+    </div>
+  </div>
+  <header class="app-header">
+    <h1>MEE 教師用パネル</h1>
+    <span class="pause-banner"><img class="ico" src="icons/pause.svg" alt="">全員停止中</span>
+    <span class="spacer"></span>
+    <span id="status" class="pill">未接続</span>
+  </header>
+
+  <main class="app">
+    <nav class="card controls">
+      <h3>授業の進行</h3>
+      <button id="pauseToggle" title="生徒全員をその場で動けなくします（先生は除く）"><img class="ico" src="icons/pause.svg" alt="">全員停止</button>
+      <button id="gatherBtn" title="生徒全員を先生の位置へテレポートします"><img class="ico" src="icons/gather.svg" alt="">全員集合</button>
+      <h3>配布</h3>
+      <button id="cameraItemsBtn" title="全員にカメラとポートフォリオを配ります"><img class="ico" src="icons/camera.svg" alt="">カメラ</button>
+      <button id="reviewItemsBtn" title="全員に本と羽根ペンを配ります"><img class="ico" src="icons/review.svg" alt="">振り返り</button>
+      <button id="mayflyToggle" title="先生自身の飛行能力（mayfly）を切り替えます">飛行能力</button>
+      <h3>ワールド整備</h3>
+      <button id="killMobBtn" class="danger" title="先生の周囲50ブロックのモブを削除します（プレイヤー・落ちているアイテム・NPC・エージェント・カメラ・防具立て・絵画・乗り物は残ります）"><img class="ico" src="icons/mob-clear.svg" alt="">モブ削除<span class="sub">周囲50</span></button>
+      <button id="clearFluidsSelfBtn" class="danger" title="先生の周囲15ブロック（31×31×31）の水・マグマを消します"><img class="ico" src="icons/fluid-clear.svg" alt="">水・マグマ消去<span class="sub">周囲15</span></button>
+    </nav>
+
+    <section class="card map-card">
+      <div class="map-toolbar">
+        <h2>位置マップ</h2>
+        <label>背景 <select id="mapBgSelect"><option value="">なし（グリッドのみ）</option></select></label>
+        <label>不透明度 <input id="mapBgOpacity" type="range" min="0" max="100" value="100" disabled></label>
+        <button id="mapBgWorld">ワールドから生成</button>
+        <button id="mapBgAdd">画像から追加</button>
+        <button id="mapBgDelete" disabled>削除</button>
+      </div>
+      <div class="map-wrap">
+        <canvas id="map"></canvas>
+        <div id="mapTooltip" class="map-tooltip hide"></div>
+      </div>
+      <div class="map-footer">
+        <span>ホイール：ズーム　ドラッグ：移動　▲向き　★先生　縁の色：青＝先生より上／茶＝下　点線＝別ディメンション　薄い＝30秒以上動きなし</span>
+        <button id="mapReset">表示リセット</button>
+      </div>
+      <div id="mapBgInfo" class="muted" style="margin-top:4px" hidden></div>
+    </section>
+
+    <div class="side-right">
+      <section class="card roster-card">
+        <h2>参加者 <span id="rosterCount" class="count">0</span></h2>
+        <div id="roster" class="muted">接続待ち…</div>
+      </section>
+
+      <section class="card chat-card">
+        <h2>チャット</h2>
+        <div id="chatlog" class="muted">生徒の発言はここに表示されます。</div>
+        <div class="chat-input">
+          <input id="chatMsg" placeholder="全員にメッセージを送る">
+          <button id="chatSend">送信</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const rosterEl = document.getElementById('roster');
+      const chatEl = document.getElementById('chatlog');
+      const mapCanvas = document.getElementById('map');
+      const mapTooltip = document.getElementById('mapTooltip');
+      const statusEl = document.getElementById('status');
+      const pauseOverlay = document.getElementById('pauseOverlay');
+      const connectOverlay = document.getElementById('connectOverlay');
+      const connectCommandText = document.getElementById('connectCommandText');
+      const connectCopyBtn = document.getElementById('connectCopyBtn');
+      const CONNECT_COMMAND = '/connect 127.0.0.1:8080';
+      if (connectCommandText) connectCommandText.textContent = CONNECT_COMMAND;
+      const ctx = mapCanvas ? mapCanvas.getContext('2d') : null;
+
+      const state = { roster: [], chat: [], pauseOn: false, mayflyOn: false, meeConnected: false, teacher: '' };
+      const mapState = {
+        histories: new Map(),
+        view: {
+          scale: 1,
+          targetScale: 1,
+          centerX: 0,
+          centerZ: 0,
+          targetCenterX: 0,
+          targetCenterZ: 0,
+          autoFit: true,
+          initialized: false
+        },
+        pointer: { dragging: false, x: 0, y: 0 },
+        hover: null,
+        drawn: []
+      };
+
+      const chatDedup = { ids: new Set(), fallback: new Set() };
+      const connectLamp = document.getElementById('connectLamp');
+      updateConnectionOverlay();
+
+      // ボタン用のドット絵アイコン（public/icons/*.svg）
+      const icon = name => '<img class="ico" src="icons/' + name + '.svg" alt="" draggable="false">';
+
+      fetch('/api/version')
+        .then(res => res.ok ? res.json() : null)
+        .then(info => {
+          const el = document.getElementById('appVersion');
+          if (el && info && info.version) el.textContent = 'v' + info.version;
+        })
+        .catch(() => { });
+
+      function updateConnectionOverlay() {
+        if (!connectOverlay) return;
+        connectOverlay.classList.toggle('hide', !!state.meeConnected);
+        if (connectLamp) {
+          const label = state.meeConnected ? '接続済み' : '接続待ち';
+          connectLamp.src = state.meeConnected ? 'icons/lamp-ok.svg' : 'icons/lamp-wait.svg';
+          connectLamp.alt = label;
+          connectLamp.title = label;
+          connectLamp.classList.toggle('ok', !!state.meeConnected);
+        }
+      }
+
+      // ？ボタンで接続手順を開閉する
+      const connectHelpBtn = document.getElementById('connectHelpBtn');
+      const connectSteps = document.getElementById('connectSteps');
+      if (connectHelpBtn && connectSteps) {
+        connectHelpBtn.addEventListener('click', () => {
+          const open = connectSteps.hidden;
+          connectSteps.hidden = !open;
+          connectHelpBtn.setAttribute('aria-expanded', String(open));
+        });
+      }
+
+      if (connectCopyBtn) {
+        const copyIcon = connectCopyBtn.querySelector('img');
+        const copyLabel = connectCopyBtn.querySelector('.connect-copy-label');
+        const resetCopyLabel = () => {
+          if (copyIcon) copyIcon.src = 'icons/clipboard.svg';
+          if (copyLabel) copyLabel.textContent = 'コピー';
+          connectCopyBtn.classList.remove('copied');
+        };
+        resetCopyLabel();
+        connectCopyBtn.addEventListener('click', async () => {
+          const text = CONNECT_COMMAND;
+          let copied = false;
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(text);
+              copied = true;
+            }
+          } catch (_) {
+            copied = false;
+          }
+          if (!copied) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            temp.setAttribute('readonly', '');
+            temp.style.position = 'fixed';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.select();
+            try {
+              copied = document.execCommand('copy');
+            } catch (_) {
+              copied = false;
+            }
+            document.body.removeChild(temp);
+          }
+          if (copied) {
+            if (copyIcon) copyIcon.src = 'icons/check.svg';
+            if (copyLabel) copyLabel.textContent = 'コピーしました';
+            connectCopyBtn.classList.add('copied');
+            setTimeout(resetCopyLabel, 1600);
+          } else {
+            resetCopyLabel();
+            alert('クリップボードにコピーできませんでした。手動で入力してください。');
+          }
+        });
+      }
+
+      function chatKey(entry) {
+        if (!entry) return '';
+        const player = entry.player || '';
+        theMessage = entry.message || '';
+        const time = Number.isFinite(entry.t) ? entry.t : '';
+        return JSON.stringify([player, theMessage, time]);
+      }
+
+      function resetChatDedup(entries) {
+        chatDedup.ids.clear();
+        chatDedup.fallback.clear();
+        if (!Array.isArray(entries)) return;
+        entries.forEach(entry => {
+          if (entry && entry.id) {
+            chatDedup.ids.add(entry.id);
+          } else if (entry) {
+            chatDedup.fallback.add(chatKey(entry));
+          }
+        });
+      }
+
+      function registerChatEntry(entry) {
+        if (!entry) return false;
+        if (entry.id) {
+          if (chatDedup.ids.has(entry.id)) return false;
+          chatDedup.ids.add(entry.id);
+        } else {
+          const key = chatKey(entry);
+          if (chatDedup.fallback.has(key)) return false;
+          chatDedup.fallback.add(key);
+        }
+        return true;
+      }
+
+      function removeChatEntry(entry) {
+        if (!entry) return;
+        if (entry.id) {
+          chatDedup.ids.delete(entry.id);
+        } else {
+          chatDedup.fallback.delete(chatKey(entry));
+        }
+      }
+
+      updatePauseOverlay(false);
+
+      const TRAIL_MAX_MS = 15000;
+      const MAX_HISTORY = 120;
+      // 位置は約10Hzで届くので、2フレーム分ほど遅らせて補間する
+      const INTERP_LAG_MS = 200;
+      // 最新点より先の外挿は短く抑え、停止時の行き過ぎを防ぐ
+      const EXTRAP_MAX_MS = 150;
+      // これ以上離れた移動はテレポートとみなして補間・トレイルを繋がない
+      const TELEPORT_DIST = 32;
+      const ZOOM_MIN = 0.2;
+      const ZOOM_MAX = 8;
+      const AUTO_PAD = 40;
+      const STALE_MS = 30000;
+      const Y_DIFF_THRESHOLD = 8;
+      const IDLE_REDRAW_MS = 500;
+      const HOVER_RADIUS = 12;
+      const GRID_STEPS = [16, 64, 256, 1024];
+      const TRAIL_ALPHAS = [0.6, 0.42, 0.27, 0.15];
+      const DIMENSION_NAMES = { 0: 'オーバーワールド', 1: 'ネザー', 2: 'エンド' };
+
+      function setStatus(text, color) {
+        if (!statusEl) return;
+        statusEl.textContent = text;
+        statusEl.style.background = color || '#eee';
+      }
+
+      function updatePauseOverlay(active) {
+        // ヘッダーの黄色帯（全員停止中）の表示切り替え
+        document.body.classList.toggle('paused', !!active);
+        if (!pauseOverlay) return;
+        pauseOverlay.classList.toggle('show', !!active);
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      // 名簿の行ボタンの送信中表示。名簿は1秒ごとに描き直すので、ボタンの状態はここで持つ
+      // key: `${action}:${name}` → 表示ラベル
+      const rosterActionLabels = new Map();
+      const ROSTER_ACTIONS = {
+        gather: { label: '集合', path: '/api/gather_name', title: '先生の位置へテレポート', fail: '個別集合コマンドの送信に失敗しました。' },
+        allow: { label: '許可', path: '/api/allow_name', title: 'PAUSE 中でも動けるようにする', fail: '許可リクエストの送信に失敗しました。' }
+      };
+
+      function renderRoster() {
+        if (!rosterEl) return;
+        const countEl = document.getElementById('rosterCount');
+        if (countEl) countEl.textContent = String(state.roster.length);
+        const now = Date.now();
+        const list = state.roster.slice().sort((a, b) => {
+          const at = a.name === state.teacher ? 0 : 1;
+          const bt = b.name === state.teacher ? 0 : 1;
+          return at - bt || String(a.name).localeCompare(String(b.name), 'ja');
+        });
+        const rows = list.map(p => {
+          const seen = Math.max(0, Math.round((now - p.lastSeen) / 1000));
+          const isTeacher = p.name === state.teacher;
+          const stale = seen * 1000 >= STALE_MS;
+          const pos = p.pos ? `x ${Math.round(p.pos.x)} / z ${Math.round(p.pos.z)}` : '位置不明';
+          const meta = isTeacher ? `先生　${pos}` : (stale ? `${pos}　${seen}秒 動きなし` : pos);
+          const name = escapeHtml(p.name);
+          const buttons = isTeacher ? '' : Object.entries(ROSTER_ACTIONS).map(([action, a]) => {
+            const label = rosterActionLabels.get(`${action}:${p.name}`);
+            return `<button type="button" data-action="${action}" data-name="${name}" title="${a.title}"${label ? ' disabled' : ''}>${label || a.label}</button>`;
+          }).join('');
+          return `<div class="roster-row${isTeacher ? ' teacher' : ''}${stale ? ' stale' : ''}">`
+            + `<div class="who"><div class="name">${name}</div><div class="meta">${meta}</div></div>${buttons}</div>`;
+        }).join('');
+        rosterEl.innerHTML = rows || '<div class="muted">プレイヤー未接続</div>';
+      }
+
+      if (rosterEl) rosterEl.addEventListener('click', async (ev) => {
+        const btn = ev.target.closest('button[data-action]');
+        if (!btn || btn.disabled) return;
+        const action = btn.dataset.action;
+        const name = btn.dataset.name;
+        const a = ROSTER_ACTIONS[action];
+        if (!a || !name) return;
+        const key = `${action}:${name}`;
+        rosterActionLabels.set(key, '送信中…');
+        renderRoster();
+        const ok = await post(a.path, { name });
+        if (!ok) {
+          rosterActionLabels.delete(key);
+          renderRoster();
+          alert(a.fail);
+          return;
+        }
+        rosterActionLabels.set(key, '✓');
+        renderRoster();
+        setTimeout(() => { rosterActionLabels.delete(key); renderRoster(); }, 1200);
+      });
+
+      // 位置イベントのたびに名簿を描き直さないよう、1秒に1回へ間引く
+      let rosterRenderTimer = null;
+      function scheduleRosterRender() {
+        if (rosterRenderTimer) return;
+        rosterRenderTimer = setTimeout(() => {
+          rosterRenderTimer = null;
+          renderRoster();
+        }, 1000);
+      }
+
+      function renderChat() {
+        if (!chatEl) return;
+        if (!state.chat.length) return;
+        chatEl.classList.remove('muted');
+        chatEl.textContent = state.chat.map(c => {
+          return `[${new Date(c.t).toLocaleTimeString()}] <${c.player}> ${c.message}`;
+        }).join('\n');
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
+
+      /* ---------- 時刻 ---------- */
+      // ローカル時刻 - サーバ時刻。小さい方へ寄せて配信遅延の揺らぎを吸収する
+      let clockOffset = null;
+      function updateClockOffset(serverT) {
+        if (!Number.isFinite(serverT)) return;
+        const sample = Date.now() - serverT;
+        if (clockOffset === null || sample < clockOffset) clockOffset = sample;
+        else clockOffset += (sample - clockOffset) * 0.02;
+      }
+      function serverNow() {
+        return Date.now() - (clockOffset || 0);
+      }
+
+      /* ---------- 位置履歴 ---------- */
+      function pushHistoryPoint(name, p) {
+        if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.z)) return;
+        const t = Number.isFinite(p.t) ? p.t : serverNow();
+        let history = mapState.histories.get(name);
+        if (!history) { history = []; mapState.histories.set(name, history); }
+        const latest = history[history.length - 1];
+        if (latest && t <= latest.t) return;
+        const point = {
+          t,
+          x: p.x,
+          z: p.z,
+          y: Number.isFinite(p.y) ? p.y : null,
+          yaw: Number.isFinite(p.yaw) ? p.yaw : null,
+          dim: Number.isFinite(p.dim) ? p.dim : null
+        };
+        const prev = history[history.length - 2];
+        if (latest && prev && latest.x === point.x && latest.z === point.z && prev.x === point.x && prev.z === point.z) {
+          // 停止中は末尾を更新するだけ（停止した瞬間の点は残して補間を正しく保つ）
+          Object.assign(latest, point);
+        } else {
+          history.push(point);
+          if (history.length > MAX_HISTORY) history.shift();
+        }
+      }
+
+      function syncMapWithRoster(roster) {
+        const names = new Set();
+        roster.forEach(p => {
+          names.add(p.name);
+          if (p.pos) pushHistoryPoint(p.name, p.pos);
+        });
+        for (const name of Array.from(mapState.histories.keys())) {
+          if (!names.has(name)) mapState.histories.delete(name);
+        }
+        if (mapState.view.autoFit) autoFitView();
+        requestRender();
+      }
+
+      function getLatestEntries() {
+        const list = [];
+        mapState.histories.forEach((history, name) => {
+          if (history.length) list.push({ name, ...history[history.length - 1] });
+        });
+        return list;
+      }
+
+      /* ---------- ビュー ---------- */
+      function ensureCanvasSize() {
+        if (!mapCanvas || !ctx) return { w: 0, h: 0, dpr: 1 };
+        const w = mapCanvas.clientWidth || 1;
+        const h = mapCanvas.clientHeight || 1;
+        const dpr = window.devicePixelRatio || 1;
+        const pw = Math.round(w * dpr);
+        const ph = Math.round(h * dpr);
+        if (mapCanvas.width !== pw || mapCanvas.height !== ph) {
+          mapCanvas.width = pw; mapCanvas.height = ph;
+        }
+        return { w, h, dpr };
+      }
+
+      function autoFitView() {
+        if (!mapCanvas || !ctx) return;
+        const dims = ensureCanvasSize();
+        if (!dims.w || !dims.h) return;
+        const pts = getLatestEntries();
+        if (!pts.length) return;
+        let minX = pts[0].x, maxX = pts[0].x, minZ = pts[0].z, maxZ = pts[0].z;
+        pts.forEach(p => {
+          if (p.x < minX) minX = p.x;
+          if (p.x > maxX) maxX = p.x;
+          if (p.z < minZ) minZ = p.z;
+          if (p.z > maxZ) maxZ = p.z;
+        });
+        const spanX = Math.max(10, maxX - minX);
+        const spanZ = Math.max(10, maxZ - minZ);
+        const scaleX = (dims.w - AUTO_PAD * 2) / spanX;
+        const scaleZ = (dims.h - AUTO_PAD * 2) / spanZ;
+        const nextScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.min(scaleX, scaleZ)));
+        const view = mapState.view;
+        if (Number.isFinite(nextScale) && nextScale > 0) {
+          view.targetScale = nextScale;
+        }
+        view.targetCenterX = (minX + maxX) / 2;
+        view.targetCenterZ = (minZ + maxZ) / 2;
+        if (!view.initialized) {
+          view.scale = view.targetScale;
+          view.centerX = view.targetCenterX;
+          view.centerZ = view.targetCenterZ;
+          view.initialized = true;
+        }
+        requestRender();
+      }
+
+      // マイクラの向きに合わせて +x を右（東）、+z を下（南）に描く
+      function worldToScreen(x, z, dims) {
+        const scale = mapState.view.scale || 1;
+        return {
+          x: (x - mapState.view.centerX) * scale + dims.w / 2,
+          y: (z - mapState.view.centerZ) * scale + dims.h / 2
+        };
+      }
+
+      function screenToWorld(sx, sy, dims) {
+        const scale = mapState.view.scale || 1;
+        return {
+          x: (sx - dims.w / 2) / scale + mapState.view.centerX,
+          z: (sy - dims.h / 2) / scale + mapState.view.centerZ
+        };
+      }
+
+      // 自動フィット中のイージングを1ステップ進める。まだ動いていれば true
+      function stepView() {
+        const view = mapState.view;
+        let moving = false;
+        if (view.autoFit) {
+          const ease = 0.12;
+          const ds = view.targetScale - view.scale;
+          const dx = view.targetCenterX - view.centerX;
+          const dz = view.targetCenterZ - view.centerZ;
+          if (Math.abs(ds) > view.scale * 0.001 || Math.abs(dx) * view.scale > 0.1 || Math.abs(dz) * view.scale > 0.1) {
+            view.scale += ds * ease;
+            view.centerX += dx * ease;
+            view.centerZ += dz * ease;
+            moving = true;
+          } else {
+            view.scale = view.targetScale;
+            view.centerX = view.targetCenterX;
+            view.centerZ = view.targetCenterZ;
+          }
+        } else {
+          view.targetScale = view.scale;
+          view.targetCenterX = view.centerX;
+          view.targetCenterZ = view.centerZ;
+        }
+        if (!Number.isFinite(view.scale) || view.scale <= 0) {
+          view.scale = ZOOM_MIN;
+        } else {
+          view.scale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, view.scale));
+        }
+        if (!Number.isFinite(view.targetScale) || view.targetScale <= 0) {
+          view.targetScale = view.scale;
+        } else {
+          view.targetScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, view.targetScale));
+        }
+        return moving;
+      }
+
+      /* ---------- 補間・向き ---------- */
+      function interpolatePosition(history, targetTime) {
+        if (!history.length) return null;
+        const latest = history[history.length - 1];
+        if (history.length === 1) return latest;
+        if (targetTime >= latest.t) {
+          const prev = history[history.length - 2];
+          const dt = latest.t - prev.t;
+          // 停止後に届いた点や間隔の空いた点からは外挿しない
+          if (dt <= 0 || dt > 1000) return latest;
+          if (Math.hypot(latest.x - prev.x, latest.z - prev.z) > TELEPORT_DIST) return latest;
+          const lead = Math.min(targetTime - latest.t, EXTRAP_MAX_MS);
+          return {
+            ...latest,
+            x: latest.x + (latest.x - prev.x) / dt * lead,
+            z: latest.z + (latest.z - prev.z) / dt * lead
+          };
+        }
+        for (let i = history.length - 1; i >= 0; i--) {
+          const curr = history[i];
+          if (curr.t <= targetTime || i === 0) {
+            const next = history[Math.min(i + 1, history.length - 1)];
+            if (next === curr) return curr;
+            if (Math.hypot(next.x - curr.x, next.z - curr.z) > TELEPORT_DIST) return curr;
+            const span = next.t - curr.t || 1;
+            const ratio = Math.max(0, Math.min(1, (targetTime - curr.t) / span));
+            return {
+              ...curr,
+              x: curr.x + (next.x - curr.x) * ratio,
+              z: curr.z + (next.z - curr.z) * ratio,
+              t: targetTime
+            };
+          }
+        }
+        return latest;
+      }
+
+      // 画面上の向き（ラジアン）。yaw が無ければ直近の移動方向から推定する
+      function headingAngle(pos, history) {
+        if (Number.isFinite(pos.yaw)) {
+          const rad = pos.yaw * Math.PI / 180;
+          return Math.atan2(Math.cos(rad), -Math.sin(rad));
+        }
+        const latest = history[history.length - 1];
+        for (let i = history.length - 2; i >= 0; i--) {
+          const dx = latest.x - history[i].x;
+          const dz = latest.z - history[i].z;
+          if (Math.hypot(dx, dz) > 0.3) return Math.atan2(dz, dx);
+        }
+        return null;
+      }
+
+      function colorHue(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+          hash = (hash * 31 + name.charCodeAt(i)) | 0;
+        }
+        return Math.abs(hash % 360);
+      }
+
+      /* ---------- 背景（画像＋グリッド） ---------- */
+      const bgState = { presets: [], selectedId: null, image: null, transform: null, opacity: 1, version: 0 };
+      const bgCache = { canvas: document.createElement('canvas'), key: '' };
+
+      // 画像座標 p=(px,py) → ワールド w=(x,z) を複素数の相似変換 w = a·p + b で表す（拡大・回転・平行移動）
+      function computeCalibTransform(calib) {
+        if (!calib || !calib.a || !calib.b) return null;
+        const dpx = calib.b.px - calib.a.px;
+        const dpy = calib.b.py - calib.a.py;
+        const dwx = calib.b.x - calib.a.x;
+        const dwz = calib.b.z - calib.a.z;
+        const den = dpx * dpx + dpy * dpy;
+        if (!den) return null;
+        const ar = (dwx * dpx + dwz * dpy) / den;
+        const ai = (dwz * dpx - dwx * dpy) / den;
+        return {
+          ar,
+          ai,
+          br: calib.a.x - (ar * calib.a.px - ai * calib.a.py),
+          bi: calib.a.z - (ai * calib.a.px + ar * calib.a.py)
+        };
+      }
+
+      function drawBackgroundLayer(dims) {
+        const view = mapState.view;
+        const cache = bgCache.canvas;
+        const key = [mapCanvas.width, mapCanvas.height, view.scale, view.centerX, view.centerZ, bgState.version].join('|');
+        if (key !== bgCache.key) {
+          bgCache.key = key;
+          if (cache.width !== mapCanvas.width || cache.height !== mapCanvas.height) {
+            cache.width = mapCanvas.width;
+            cache.height = mapCanvas.height;
+          }
+          const c = cache.getContext('2d');
+          c.setTransform(1, 0, 0, 1, 0, 0);
+          c.clearRect(0, 0, cache.width, cache.height);
+          c.setTransform(dims.dpr, 0, 0, dims.dpr, 0, 0);
+          const tf = bgState.transform;
+          if (bgState.image && tf) {
+            const s = view.scale;
+            c.save();
+            c.transform(tf.ar * s, tf.ai * s, -tf.ai * s, tf.ar * s,
+              (tf.br - view.centerX) * s + dims.w / 2,
+              (tf.bi - view.centerZ) * s + dims.h / 2);
+            c.globalAlpha = bgState.opacity;
+            // 1画素が大きく表示されるほど拡大したらドット感を保つ
+            c.imageSmoothingEnabled = Math.hypot(tf.ar, tf.ai) * s * dims.dpr < 2;
+            c.drawImage(bgState.image, 0, 0);
+            c.restore();
+          }
+          drawGrid(c, dims, !!(bgState.image && tf));
+        }
+        ctx.drawImage(cache, 0, 0);
+      }
+
+      function drawGrid(c, dims, overImage) {
+        const scale = mapState.view.scale || 1;
+        const step = GRID_STEPS.find(s => s * scale >= 48) || GRID_STEPS[GRID_STEPS.length - 1];
+        const tl = screenToWorld(0, 0, dims);
+        const br = screenToWorld(dims.w, dims.h, dims);
+        const lineColor = overImage ? 'rgba(0,0,0,0.18)' : 'rgba(0,0,0,0.08)';
+        const axisColor = overImage ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.25)';
+
+        c.lineWidth = 1;
+        c.beginPath();
+        for (let x = Math.ceil(tl.x / step) * step; x <= br.x; x += step) {
+          if (x === 0) continue;
+          const sx = Math.round(worldToScreen(x, 0, dims).x) + 0.5;
+          c.moveTo(sx, 0); c.lineTo(sx, dims.h);
+        }
+        for (let z = Math.ceil(tl.z / step) * step; z <= br.z; z += step) {
+          if (z === 0) continue;
+          const sy = Math.round(worldToScreen(0, z, dims).y) + 0.5;
+          c.moveTo(0, sy); c.lineTo(dims.w, sy);
+        }
+        c.strokeStyle = lineColor;
+        c.stroke();
+
+        const origin = worldToScreen(0, 0, dims);
+        c.beginPath();
+        if (origin.x >= 0 && origin.x <= dims.w) { c.moveTo(Math.round(origin.x) + 0.5, 0); c.lineTo(Math.round(origin.x) + 0.5, dims.h); }
+        if (origin.y >= 0 && origin.y <= dims.h) { c.moveTo(0, Math.round(origin.y) + 0.5); c.lineTo(dims.w, Math.round(origin.y) + 0.5); }
+        c.strokeStyle = axisColor;
+        c.stroke();
+
+        // 座標ラベル（上端に x、左端に z）
+        c.font = '10px system-ui';
+        c.textBaseline = 'top';
+        c.lineWidth = 3;
+        c.strokeStyle = 'rgba(255,255,255,0.85)';
+        c.fillStyle = 'rgba(0,0,0,0.6)';
+        for (let x = Math.ceil(tl.x / step) * step; x <= br.x; x += step) {
+          const sx = worldToScreen(x, 0, dims).x + 3;
+          c.strokeText(`x${x}`, sx, 3);
+          c.fillText(`x${x}`, sx, 3);
+        }
+        for (let z = Math.ceil(tl.z / step) * step; z <= br.z; z += step) {
+          const sy = worldToScreen(0, z, dims).y + 3;
+          if (sy < 16) continue;
+          c.strokeText(`z${z}`, 3, sy);
+          c.fillText(`z${z}`, 3, sy);
+        }
+
+        // スケールバー（左下）
+        const barPx = step * scale;
+        const bx = 10, by = dims.h - 12;
+        c.lineWidth = 4;
+        c.strokeStyle = 'rgba(255,255,255,0.85)';
+        c.beginPath(); c.moveTo(bx, by); c.lineTo(bx + barPx, by); c.stroke();
+        c.lineWidth = 2;
+        c.strokeStyle = 'rgba(0,0,0,0.7)';
+        c.beginPath(); c.moveTo(bx, by - 4); c.lineTo(bx, by); c.lineTo(bx + barPx, by); c.lineTo(bx + barPx, by - 4); c.stroke();
+        c.textBaseline = 'bottom';
+        c.lineWidth = 3;
+        c.strokeStyle = 'rgba(255,255,255,0.85)';
+        c.strokeText(`${step}ブロック`, bx + 4, by - 3);
+        c.fillText(`${step}ブロック`, bx + 4, by - 3);
+        c.textBaseline = 'alphabetic';
+      }
+
+      /* ---------- マーカー・ラベル ---------- */
+      function starPath(c, outer, inner) {
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? outer : inner;
+          const a = -Math.PI / 2 + i * Math.PI / 5;
+          if (i === 0) c.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+          else c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        c.closePath();
+      }
+
+      function drawMarker(c, item) {
+        const { pt, angle } = item;
+        c.save();
+        c.translate(pt.x, pt.y);
+        c.globalAlpha = item.stale ? 0.35 : 1;
+        c.lineWidth = 2;
+        c.strokeStyle = item.ringColor || (item.isTeacher ? '#7a5a00' : 'rgba(255,255,255,0.95)');
+        if (item.otherDim) c.setLineDash([3, 2]);
+        c.beginPath();
+        if (item.isTeacher) {
+          starPath(c, 10, 4.5);
+          c.fillStyle = '#f5b301';
+        } else if (angle !== null) {
+          c.rotate(angle);
+          c.moveTo(9, 0); c.lineTo(-6, 6.5); c.lineTo(-3, 0); c.lineTo(-6, -6.5); c.closePath();
+          c.fillStyle = `hsl(${colorHue(item.name)},70%,48%)`;
+        } else {
+          c.arc(0, 0, 5.5, 0, Math.PI * 2);
+          c.fillStyle = `hsl(${colorHue(item.name)},70%,48%)`;
+        }
+        c.fill();
+        c.stroke();
+        if (item.isTeacher && angle !== null) {
+          // 先生の星には向きを示す短い線を添える
+          c.setLineDash([]);
+          c.rotate(angle);
+          c.beginPath(); c.moveTo(10, 0); c.lineTo(17, 0);
+          c.strokeStyle = '#7a5a00';
+          c.stroke();
+        }
+        c.restore();
+      }
+
+      const textWidthCache = new Map();
+      function labelWidth(c, text) {
+        let w = textWidthCache.get(text);
+        if (w === undefined) {
+          w = c.measureText(text).width;
+          textWidthCache.set(text, w);
+        }
+        return w;
+      }
+
+      // 重ならない位置を貪欲に探してラベルを置く。置けなければ省略（ホバーで確認できる）
+      function drawLabels(c, items, dims) {
+        c.font = '12px system-ui';
+        c.textBaseline = 'middle';
+        const placed = items.map(it => ({ x: it.pt.x - 8, y: it.pt.y - 8, w: 16, h: 16 }));
+        const overlaps = r => placed.some(p => r.x < p.x + p.w && r.x + r.w > p.x && r.y < p.y + p.h && r.y + r.h > p.y);
+        const order = items.slice().sort((a, b) =>
+          (b.name === mapState.hover) - (a.name === mapState.hover) ||
+          b.isTeacher - a.isTeacher ||
+          a.stale - b.stale ||
+          a.name.localeCompare(b.name));
+        order.forEach(it => {
+          const w = labelWidth(c, it.name) + 8;
+          const h = 16;
+          const candidates = [[10, -h - 2], [10, 2], [-10 - w, -h - 2], [-10 - w, 2], [-w / 2, -h - 12], [-w / 2, 12]];
+          for (const [dx, dy] of candidates) {
+            const r = { x: it.pt.x + dx, y: it.pt.y + dy, w, h };
+            if (r.x < 0 || r.y < 0 || r.x + w > dims.w || r.y + h > dims.h) continue;
+            if (overlaps(r)) continue;
+            placed.push(r);
+            c.globalAlpha = it.stale ? 0.5 : 1;
+            c.fillStyle = 'rgba(255,255,255,0.82)';
+            c.beginPath();
+            c.roundRect(r.x, r.y, r.w, r.h, 4);
+            c.fill();
+            c.fillStyle = '#222';
+            c.fillText(it.name, r.x + 4, r.y + h / 2 + 0.5);
+            break;
+          }
+        });
+        c.globalAlpha = 1;
+        c.textBaseline = 'alphabetic';
+      }
+
+      function drawTrails(c, active, dims, sNow, renderTime) {
+        c.lineCap = 'round';
+        c.lineJoin = 'round';
+        c.lineWidth = 2;
+        const bucketMs = TRAIL_MAX_MS / TRAIL_ALPHAS.length;
+        active.forEach(({ name, history, pos, stale }) => {
+          // 経過時間ごとに4本のパスへまとめ、stroke 回数を抑える
+          const paths = TRAIL_ALPHAS.map(() => new Path2D());
+          let prev = null;
+          for (const point of history) {
+            if (point.t > renderTime) break;
+            if (prev && Math.hypot(point.x - prev.x, point.z - prev.z) <= TELEPORT_DIST) {
+              const bucket = Math.min(TRAIL_ALPHAS.length - 1, Math.floor(Math.max(0, sNow - point.t) / bucketMs));
+              const p0 = worldToScreen(prev.x, prev.z, dims);
+              const p1 = worldToScreen(point.x, point.z, dims);
+              paths[bucket].moveTo(p0.x, p0.y);
+              paths[bucket].lineTo(p1.x, p1.y);
+            }
+            prev = point;
+          }
+          if (prev && Math.hypot(pos.x - prev.x, pos.z - prev.z) <= TELEPORT_DIST) {
+            const p0 = worldToScreen(prev.x, prev.z, dims);
+            const p1 = worldToScreen(pos.x, pos.z, dims);
+            paths[0].moveTo(p0.x, p0.y);
+            paths[0].lineTo(p1.x, p1.y);
+          }
+          const hue = colorHue(name);
+          paths.forEach((path, i) => {
+            c.strokeStyle = `hsla(${hue},70%,50%,${TRAIL_ALPHAS[i] * (stale ? 0.5 : 1)})`;
+            c.stroke(path);
+          });
+        });
+      }
+
+      function updateTooltip(dims, sNow) {
+        if (!mapTooltip) return;
+        const item = mapState.hover ? mapState.drawn.find(d => d.name === mapState.hover) : null;
+        if (!item || mapState.pointer.dragging) {
+          mapTooltip.classList.add('hide');
+          return;
+        }
+        const p = item.pos;
+        const lines = [item.isTeacher ? `${item.name}（先生）` : item.name];
+        lines.push(`x:${Math.round(p.x)}  y:${Number.isFinite(p.y) ? Math.round(p.y) : '-'}  z:${Math.round(p.z)}`);
+        if (Number.isFinite(item.latest.dim) && item.latest.dim !== 0) {
+          lines.push(DIMENSION_NAMES[item.latest.dim] || `ディメンション ${item.latest.dim}`);
+        }
+        lines.push(`最終更新 ${Math.max(0, Math.round((sNow - item.latest.t) / 1000))}秒前`);
+        mapTooltip.textContent = lines.join('\n');
+        mapTooltip.classList.remove('hide');
+        const tw = mapTooltip.offsetWidth;
+        const th = mapTooltip.offsetHeight;
+        let left = item.pt.x + 14;
+        let top = item.pt.y + 14;
+        if (left + tw > dims.w) left = item.pt.x - 14 - tw;
+        if (top + th > dims.h) top = item.pt.y - 14 - th;
+        mapTooltip.style.left = `${Math.max(0, left)}px`;
+        mapTooltip.style.top = `${Math.max(0, top)}px`;
+      }
+
+      /* ---------- 描画ループ ---------- */
+      // 動きがある間だけ rAF で描き、静止時は低頻度、タブ非表示中は停止する
+      let renderScheduled = false;
+      let idleTimer = null;
+      function requestRender() {
+        if (renderScheduled || document.hidden) return;
+        renderScheduled = true;
+        if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+        requestAnimationFrame(renderMapFrame);
+      }
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) requestRender(); });
+      window.addEventListener('resize', requestRender);
+      // カラム幅の変化（ウィンドウ幅以外の要因）にも追従する
+      if (window.ResizeObserver && mapCanvas) new ResizeObserver(() => requestRender()).observe(mapCanvas);
+
+      function renderMapFrame() {
+        renderScheduled = false;
+        if (!mapCanvas || !ctx) return;
+        const dims = ensureCanvasSize();
+        if (!dims.w || !dims.h) { idleTimer = setTimeout(requestRender, IDLE_REDRAW_MS); return; }
+
+        const viewMoving = stepView();
+        const sNow = serverNow();
+        const renderTime = sNow - INTERP_LAG_MS;
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+        drawBackgroundLayer(dims);
+        ctx.setTransform(dims.dpr, 0, 0, dims.dpr, 0, 0);
+
+        let interpolating = false;
+        const active = [];
+        mapState.histories.forEach((history, name) => {
+          while (history.length > 1 && sNow - history[0].t > TRAIL_MAX_MS) history.shift();
+          const pos = interpolatePosition(history, renderTime);
+          if (!pos) return;
+          const latest = history[history.length - 1];
+          if (renderTime < latest.t + EXTRAP_MAX_MS) interpolating = true;
+          active.push({
+            name,
+            pos,
+            history,
+            latest,
+            stale: sNow - latest.t > STALE_MS,
+            isTeacher: !!state.teacher && name === state.teacher
+          });
+        });
+
+        if (!active.length) {
+          ctx.fillStyle = '#666';
+          ctx.font = '14px system-ui';
+          ctx.fillText('位置データなし', 10, 22);
+        } else {
+          drawTrails(ctx, active, dims, sNow, renderTime);
+          const teacher = active.find(a => a.isTeacher);
+          active.forEach(item => {
+            item.pt = worldToScreen(item.pos.x, item.pos.z, dims);
+            item.angle = headingAngle(item.pos, item.history);
+            if (teacher && !item.isTeacher && Number.isFinite(teacher.pos.y) && Number.isFinite(item.pos.y)) {
+              const dy = item.pos.y - teacher.pos.y;
+              if (dy > Y_DIFF_THRESHOLD) item.ringColor = '#1e6fff';
+              else if (dy < -Y_DIFF_THRESHOLD) item.ringColor = '#8b5a2b';
+            }
+            item.otherDim = !!teacher && !item.isTeacher &&
+              Number.isFinite(teacher.latest.dim) && Number.isFinite(item.latest.dim) &&
+              teacher.latest.dim !== item.latest.dim;
+          });
+          // 放置中 → 生徒 → 先生の順に重ねて、先生を最前面にする
+          active.sort((a, b) => b.stale - a.stale || a.isTeacher - b.isTeacher);
+          active.forEach(item => drawMarker(ctx, item));
+          drawLabels(ctx, active, dims);
+        }
+        mapState.drawn = active;
+        updateTooltip(dims, sNow);
+
+        if (viewMoving || interpolating || mapState.pointer.dragging) requestRender();
+        else idleTimer = setTimeout(requestRender, IDLE_REDRAW_MS);
+      }
+
+      requestRender();
+
+      const es = new EventSource('/events');
+      es.onopen = () => {
+        setStatus('接続待ち', '#eef');
+        updatePauseOverlay(false);
+        refreshPauseButton();
+      };
+      es.onerror = () => {
+        setStatus('未接続', '#fdd');
+        state.meeConnected = false;
+        state.pauseOn = false;
+        updateConnectionOverlay();
+        updatePauseOverlay(false);
+        refreshPauseButton();
+      };
+      es.addEventListener('hello', () => { setStatus('接続待ち', '#eef'); updatePauseOverlay(false); });
+      es.addEventListener('state', ev => {
+        try {
+          const data = JSON.parse(ev.data);
+          state.roster = Array.isArray(data.roster) ? data.roster : [];
+          state.chat = Array.isArray(data.chat) ? data.chat : [];
+          resetChatDedup(state.chat);
+          state.pauseOn = !!data.pauseOn;
+          state.mayflyOn = !!data.mayflyOn;
+          state.meeConnected = !!data.meeConnected;
+          state.teacher = typeof data.teacher === 'string' ? data.teacher : '';
+        } catch { return; }
+        refreshMayflyButton();
+        if (state.meeConnected) {
+          setStatus(state.pauseOn ? 'PAUSE維持中' : '稼働中', state.pauseOn ? '#ffe8a3' : '#eef');
+        } else {
+          setStatus('接続待ち', '#fdd');
+        }
+        updateConnectionOverlay();
+        refreshPauseButton();
+        updatePauseOverlay(state.pauseOn && state.meeConnected);
+        renderRoster();
+        renderChat();
+        syncMapWithRoster(state.roster);
+      });
+      // 位置の差分（約10Hz）。state は送られてこないので名簿の座標もここで更新する
+      es.addEventListener('pos', ev => {
+        let data;
+        try {
+          data = JSON.parse(ev.data);
+        } catch {
+          return;
+        }
+        updateClockOffset(data.t);
+        (Array.isArray(data.players) ? data.players : []).forEach(p => {
+          if (!p || !p.name) return;
+          pushHistoryPoint(p.name, p);
+          const entry = state.roster.find(r => r.name === p.name);
+          if (entry) {
+            entry.pos = { x: p.x, y: p.y, z: p.z };
+            entry.lastSeen = Date.now();
+          }
+        });
+        if (mapState.view.autoFit) autoFitView();
+        scheduleRosterRender();
+        requestRender();
+      });
+      es.addEventListener('chat', ev => {
+        let entry;
+        try {
+          entry = JSON.parse(ev.data);
+        } catch {
+          return;
+        }
+        if (!registerChatEntry(entry)) return;
+        state.chat.push(entry);
+        if (state.chat.length > 100) {
+          const removed = state.chat.shift();
+          if (removed !== entry) removeChatEntry(removed);
+        }
+        renderChat();
+      });
+
+      if (mapCanvas) {
+        mapCanvas.addEventListener('pointerdown', ev => {
+          mapState.view.autoFit = false;
+          mapState.view.targetCenterX = mapState.view.centerX;
+          mapState.view.targetCenterZ = mapState.view.centerZ;
+          mapState.view.targetScale = mapState.view.scale || 1;
+          mapState.view.initialized = true;
+          mapState.pointer.dragging = true;
+          mapState.pointer.x = ev.clientX;
+          mapState.pointer.y = ev.clientY;
+          try { mapCanvas.setPointerCapture(ev.pointerId); } catch (_) { }
+          mapCanvas.classList.add('dragging');
+          requestRender();
+        });
+        mapCanvas.addEventListener('pointermove', ev => {
+          if (!mapState.pointer.dragging) {
+            // ホバー中のマーカーを探す
+            const rect = mapCanvas.getBoundingClientRect();
+            const sx = ev.clientX - rect.left;
+            const sy = ev.clientY - rect.top;
+            let best = null;
+            let bestDist = HOVER_RADIUS;
+            mapState.drawn.forEach(d => {
+              const dist = Math.hypot(d.pt.x - sx, d.pt.y - sy);
+              if (dist <= bestDist) { best = d; bestDist = dist; }
+            });
+            const next = best ? best.name : null;
+            if (next !== mapState.hover) {
+              mapState.hover = next;
+              requestRender();
+            }
+            return;
+          }
+          const dx = ev.clientX - mapState.pointer.x;
+          const dy = ev.clientY - mapState.pointer.y;
+          mapState.pointer.x = ev.clientX;
+          mapState.pointer.y = ev.clientY;
+          const scale = mapState.view.scale || 1;
+          mapState.view.centerX -= dx / scale;
+          mapState.view.centerZ -= dy / scale;
+          mapState.view.targetCenterX = mapState.view.centerX;
+          mapState.view.targetCenterZ = mapState.view.centerZ;
+          requestRender();
+        });
+        const releasePointer = ev => {
+          if (!mapState.pointer.dragging) return;
+          mapCanvas.classList.remove('dragging');
+          mapState.pointer.dragging = false;
+          if (ev && ev.pointerId !== undefined) {
+            try { mapCanvas.releasePointerCapture(ev.pointerId); } catch (_) { }
+          }
+          requestRender();
+        };
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach(name => {
+          mapCanvas.addEventListener(name, releasePointer);
+        });
+        mapCanvas.addEventListener('pointerleave', () => {
+          if (mapState.hover) { mapState.hover = null; requestRender(); }
+        });
+        mapCanvas.addEventListener('wheel', ev => {
+          ev.preventDefault();
+          mapState.view.autoFit = false;
+          const dims = ensureCanvasSize();
+          if (!dims.w || !dims.h) return;
+          const factor = Math.exp(-ev.deltaY * 0.001);
+          const oldScale = mapState.view.scale || 1;
+          const newScale = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, oldScale * factor));
+          const rect = mapCanvas.getBoundingClientRect();
+          const sx = ev.clientX - rect.left;
+          const sy = ev.clientY - rect.top;
+          const before = screenToWorld(sx, sy, dims);
+          mapState.view.scale = newScale;
+          const after = screenToWorld(sx, sy, dims);
+          mapState.view.centerX += before.x - after.x;
+          mapState.view.centerZ += before.z - after.z;
+          mapState.view.targetScale = mapState.view.scale;
+          mapState.view.targetCenterX = mapState.view.centerX;
+          mapState.view.targetCenterZ = mapState.view.centerZ;
+          mapState.view.initialized = true;
+          requestRender();
+        }, { passive: false });
+      }
+
+      const mapReset = document.getElementById('mapReset');
+      if (mapReset) {
+        mapReset.addEventListener('click', () => {
+          mapState.view.autoFit = true;
+          mapState.view.initialized = false;
+          autoFitView();
+        });
+      }
+
+      /* ---------- 背景プリセット ---------- */
+      const bgSelect = document.getElementById('mapBgSelect');
+      const bgOpacity = document.getElementById('mapBgOpacity');
+      const bgAddBtn = document.getElementById('mapBgAdd');
+      const bgDeleteBtn = document.getElementById('mapBgDelete');
+
+      function currentPreset() {
+        return bgState.presets.find(p => p.id === bgState.selectedId) || null;
+      }
+
+      function renderPresetOptions() {
+        if (!bgSelect) return;
+        bgSelect.innerHTML = '';
+        const none = document.createElement('option');
+        none.value = '';
+        none.textContent = 'なし（グリッドのみ）';
+        bgSelect.appendChild(none);
+        bgState.presets.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name;
+          bgSelect.appendChild(opt);
+        });
+        bgSelect.value = currentPreset() ? bgState.selectedId : '';
+        const has = !!currentPreset();
+        if (bgOpacity) bgOpacity.disabled = !has;
+        if (bgDeleteBtn) bgDeleteBtn.disabled = !has;
+      }
+
+      // ワールドから生成した背景なら、何チャンク分の地形から作ったかを表示する
+      function showBgInfo(preset) {
+        const el = document.getElementById('mapBgInfo');
+        if (!el) return;
+        const src = preset?.source;
+        if (!src || !src.chunkCount) {
+          el.hidden = true;
+          return;
+        }
+        const at = src.generatedAt ? new Date(src.generatedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '';
+        el.textContent = `背景：保存済みの ${src.chunkCount} チャンクから生成（${src.width}×${src.height} ブロック${at ? `、${at}` : ''}）。白い部分はゲームがまだ保存していない場所です。`;
+        el.hidden = false;
+      }
+
+      function applySelectedPreset() {
+        const preset = currentPreset();
+        bgState.transform = preset ? computeCalibTransform(preset.calib) : null;
+        bgState.opacity = preset && Number.isFinite(preset.opacity) ? preset.opacity : 1;
+        bgState.image = null;
+        bgState.version++;
+        if (bgOpacity) bgOpacity.value = Math.round(bgState.opacity * 100);
+        showBgInfo(preset);
+        requestRender();
+        if (!preset) return;
+        const id = preset.id;
+        const img = new Image();
+        img.onload = () => {
+          if (bgState.selectedId !== id) return;
+          bgState.image = img;
+          bgState.version++;
+          requestRender();
+        };
+        img.onerror = () => console.error('背景画像の読み込みに失敗しました', id);
+        img.src = `/api/map_presets/${encodeURIComponent(id)}/image?v=${encodeURIComponent(preset.file || '')}`;
+      }
+
+      async function loadPresets() {
+        try {
+          const res = await fetch('/api/map_presets');
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          bgState.presets = Array.isArray(data.presets) ? data.presets : [];
+          bgState.selectedId = data.selectedId || null;
+        } catch (err) {
+          console.error('背景プリセットの取得に失敗しました', err);
+        }
+        renderPresetOptions();
+        applySelectedPreset();
+      }
+
+      if (bgSelect) {
+        bgSelect.addEventListener('change', async () => {
+          bgState.selectedId = bgSelect.value || null;
+          renderPresetOptions();
+          applySelectedPreset();
+          await post('/api/map_presets/select', { id: bgState.selectedId });
+        });
+      }
+
+      let opacitySaveTimer = null;
+      if (bgOpacity) {
+        bgOpacity.addEventListener('input', () => {
+          const preset = currentPreset();
+          if (!preset) return;
+          bgState.opacity = Number(bgOpacity.value) / 100;
+          preset.opacity = bgState.opacity;
+          bgState.version++;
+          requestRender();
+          clearTimeout(opacitySaveTimer);
+          opacitySaveTimer = setTimeout(() => {
+            post('/api/map_presets', { id: preset.id, opacity: preset.opacity });
+          }, 500);
+        });
+      }
+
+      if (bgDeleteBtn) {
+        bgDeleteBtn.addEventListener('click', async () => {
+          const preset = currentPreset();
+          if (!preset) return;
+          if (!confirm(`背景「${preset.name}」を削除しますか？\n画像ファイルも削除され、元に戻せません。`)) return;
+          try {
+            const res = await fetch(`/api/map_presets/${encodeURIComponent(preset.id)}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          } catch (err) {
+            console.error('背景プリセットの削除に失敗しました', err);
+            alert('背景の削除に失敗しました。');
+            return;
+          }
+          await loadPresets();
+        });
+      }
+
+      /* ---------- ワールドの保存データから背景地図を生成 ---------- */
+      const worldMapOverlay = document.getElementById('worldMapOverlay');
+      const worldMapWorld = document.getElementById('worldMapWorld');
+      const worldMapSize = document.getElementById('worldMapSize');
+      const worldMapCenter = document.getElementById('worldMapCenter');
+      const worldMapStatus = document.getElementById('worldMapStatus');
+      const worldMapRun = document.getElementById('worldMapRun');
+      let worldMapRunning = false;
+
+      async function openWorldMapDialog() {
+        if (!worldMapOverlay) return;
+        worldMapOverlay.classList.remove('hide');
+        if (worldMapRunning) return;
+        worldMapStatus.textContent = 'ワールドの一覧を読み込み中…';
+        worldMapWorld.innerHTML = '';
+        let data;
+        try {
+          const res = await fetch('/api/worlds');
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          data = await res.json();
+        } catch (err) {
+          worldMapStatus.textContent = `ワールドの一覧を取得できませんでした（${err.message}）`;
+          return;
+        }
+        const worlds = Array.isArray(data.worlds) ? data.worlds : [];
+        worlds.forEach(w => {
+          const opt = document.createElement('option');
+          opt.value = w.id;
+          const date = w.modified ? new Date(w.modified).toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+          opt.textContent = date ? `${w.name}（${date} 保存）` : w.name;
+          worldMapWorld.appendChild(opt);
+        });
+        // 選択中の背景がワールドから生成したものなら、その設定を初期値にする
+        const src = currentPreset()?.source;
+        if (src && worlds.some(w => w.id === src.worldId)) {
+          worldMapWorld.value = src.worldId;
+          if (src.size) worldMapSize.value = String(src.size);
+        }
+        worldMapCenter.value = data.teacherPos ? 'teacher' : 'spawn';
+        worldMapCenter.querySelector('option[value="teacher"]').disabled = !data.teacherPos;
+        worldMapStatus.textContent = worlds.length
+          ? '一覧の先頭が、最後に保存されたワールドです。'
+          : 'この PC に Minecraft Education のワールドが見つかりません。';
+        worldMapRun.disabled = !worlds.length;
+      }
+
+      const bgWorldBtn = document.getElementById('mapBgWorld');
+      if (bgWorldBtn) bgWorldBtn.addEventListener('click', openWorldMapDialog);
+      document.getElementById('worldMapCancel')?.addEventListener('click', () => worldMapOverlay.classList.add('hide'));
+
+      worldMapRun?.addEventListener('click', async () => {
+        if (worldMapRunning || !worldMapWorld.value) return;
+        worldMapRunning = true;
+        worldMapRun.disabled = true;
+        worldMapStatus.textContent = '生成中…（大きいワールドや広い範囲では1分以上かかることがあります）';
+        try {
+          const res = await fetch('/api/worldmap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              worldId: worldMapWorld.value,
+              size: worldMapSize.value === 'auto' ? 'auto' : Number(worldMapSize.value),
+              center: worldMapCenter.value
+            })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+          worldMapStatus.textContent = '';
+          worldMapOverlay.classList.add('hide');
+          await loadPresets();
+        } catch (err) {
+          worldMapStatus.textContent = `生成に失敗しました：${err.message}`;
+        } finally {
+          worldMapRunning = false;
+          worldMapRun.disabled = false;
+        }
+      });
+
+      /* ---------- 背景の位置合わせ（2点キャリブレーション） ---------- */
+      const calibOverlay = document.getElementById('calibOverlay');
+      const calibFile = document.getElementById('calibFile');
+      const calibName = document.getElementById('calibName');
+      const calibHint = document.getElementById('calibHint');
+      const calibImg = document.getElementById('calibImg');
+      const calibMarks = { a: document.getElementById('calibMarkA'), b: document.getElementById('calibMarkB') };
+      const calibInputs = {
+        a: { x: document.getElementById('calibAx'), z: document.getElementById('calibAz') },
+        b: { x: document.getElementById('calibBx'), z: document.getElementById('calibBz') }
+      };
+      const calib = { dataUrl: null, mode: 'a', a: null, b: null };
+
+      function updateCalibHint() {
+        if (!calibHint) return;
+        if (!calib.dataUrl) {
+          calibHint.textContent = '背景にする画像（真上から見た地図やスクリーンショット）を選んでください。';
+        } else if (calib.mode === 'a') {
+          calibHint.textContent = '画像上で、ゲーム内の座標が分かる地点Aをクリックしてください（/gamerule showcoordinates true で座標を表示できます）。';
+        } else if (calib.mode === 'b') {
+          calibHint.textContent = '地点Aからなるべく離れた地点Bをクリックしてください。';
+        } else {
+          calibHint.textContent = '点A・点Bのゲーム内座標 (x, z) を入力して保存してください。点はクリックし直せます。';
+        }
+      }
+
+      // 入力中の2点から、画像の上方向がどの方角になるかと縮尺を表示する（入力ミスに気付けるように）
+      const calibCheck = document.getElementById('calibCheck');
+      const CALIB_ROTATION_WARN_DEG = 10;
+      function updateCalibCheck() {
+        if (!calibCheck) return;
+        const filled = pair => pair.x.value.trim() !== '' && pair.z.value.trim() !== '';
+        const tf = calib.a && calib.b && filled(calibInputs.a) && filled(calibInputs.b)
+          ? computeCalibTransform({
+            a: { ...calib.a, x: Number(calibInputs.a.x.value), z: Number(calibInputs.a.z.value) },
+            b: { ...calib.b, x: Number(calibInputs.b.x.value), z: Number(calibInputs.b.z.value) }
+          })
+          : null;
+        if (!tf || ![tf.ar, tf.ai].every(Number.isFinite) || (!tf.ar && !tf.ai)) {
+          calibCheck.textContent = '';
+          return;
+        }
+        // 画像の上方向 (0,-1) をワールドへ写した向き。北を0°として時計回り
+        const deg = Math.atan2(tf.ai, tf.ar) * 180 / Math.PI;
+        const dirs = ['北', '北東', '東', '南東', '南', '南西', '西', '北西'];
+        const dir = dirs[Math.round((deg + 360) % 360 / 45) % 8];
+        const scale = Math.hypot(tf.ar, tf.ai);
+        let text = `確認：画像の上 ＝ ${dir}（北から${deg >= 0 ? '時計回り' : '反時計回り'}に${Math.abs(deg).toFixed(0)}°）、縮尺 ${scale.toFixed(3)} ブロック/px`;
+        if (Math.abs(deg) > CALIB_ROTATION_WARN_DEG) {
+          text += '\n北を上にして撮った画像なら、点の位置か座標の入力（x と z の取り違え、符号）を見直してください。';
+        }
+        calibCheck.textContent = text;
+        calibCheck.style.whiteSpace = 'pre-line';
+        calibCheck.style.color = Math.abs(deg) > CALIB_ROTATION_WARN_DEG ? '#b45309' : '';
+      }
+      Object.values(calibInputs).forEach(pair => {
+        pair.x.addEventListener('input', updateCalibCheck);
+        pair.z.addEventListener('input', updateCalibCheck);
+      });
+
+      function placeCalibMark(key) {
+        const mark = calibMarks[key];
+        const pt = calib[key];
+        if (!mark) return;
+        if (!pt || !calibImg || !calibImg.naturalWidth) { mark.classList.add('hide'); return; }
+        mark.style.left = `${pt.px / calibImg.naturalWidth * 100}%`;
+        mark.style.top = `${pt.py / calibImg.naturalHeight * 100}%`;
+        mark.classList.remove('hide');
+      }
+
+      function openCalibDialog() {
+        if (!calibOverlay) return;
+        calib.dataUrl = null;
+        calib.mode = 'a';
+        calib.a = null;
+        calib.b = null;
+        if (calibFile) calibFile.value = '';
+        if (calibName) calibName.value = '';
+        if (calibImg) calibImg.removeAttribute('src');
+        Object.values(calibInputs).forEach(pair => { pair.x.value = ''; pair.z.value = ''; });
+        placeCalibMark('a');
+        placeCalibMark('b');
+        updateCalibHint();
+        updateCalibCheck();
+        calibOverlay.classList.remove('hide');
+      }
+
+      function closeCalibDialog() {
+        if (calibOverlay) calibOverlay.classList.add('hide');
+      }
+
+      if (bgAddBtn) bgAddBtn.addEventListener('click', openCalibDialog);
+      const calibCancel = document.getElementById('calibCancel');
+      if (calibCancel) calibCancel.addEventListener('click', closeCalibDialog);
+
+      if (calibFile) {
+        calibFile.addEventListener('change', () => {
+          const file = calibFile.files && calibFile.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            calib.dataUrl = reader.result;
+            calib.mode = 'a';
+            calib.a = null;
+            calib.b = null;
+            if (calibName && !calibName.value) calibName.value = file.name.replace(/\.[^.]+$/, '');
+            if (calibImg) calibImg.src = calib.dataUrl;
+            placeCalibMark('a');
+            placeCalibMark('b');
+            updateCalibHint();
+            updateCalibCheck();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      if (calibImg) {
+        calibImg.addEventListener('click', ev => {
+          if (!calib.dataUrl || !calibImg.naturalWidth) return;
+          const rect = calibImg.getBoundingClientRect();
+          const px = (ev.clientX - rect.left) * calibImg.naturalWidth / rect.width;
+          const py = (ev.clientY - rect.top) * calibImg.naturalHeight / rect.height;
+          const key = calib.mode === 'b' ? 'b' : 'a';
+          calib[key] = { px, py };
+          placeCalibMark(key);
+          if (calib.mode === 'a') calib.mode = calib.b ? 'done' : 'b';
+          else calib.mode = 'done';
+          updateCalibHint();
+          updateCalibCheck();
+        });
+      }
+
+      ['a', 'b'].forEach(key => {
+        const btn = document.getElementById(key === 'a' ? 'calibPickA' : 'calibPickB');
+        if (btn) btn.addEventListener('click', () => {
+          calib.mode = key;
+          updateCalibHint();
+        });
+      });
+
+      const calibSave = document.getElementById('calibSave');
+      if (calibSave) {
+        calibSave.addEventListener('click', async () => {
+          if (!calib.dataUrl) return alert('画像を選んでください。');
+          if (!calib.a || !calib.b) return alert('画像上で点Aと点Bをクリックしてください。');
+          const readPair = pair => ({ x: Number(pair.x.value), z: Number(pair.z.value) });
+          const wa = readPair(calibInputs.a);
+          const wb = readPair(calibInputs.b);
+          const filled = pair => pair.x.value.trim() !== '' && pair.z.value.trim() !== '';
+          if (!filled(calibInputs.a) || !filled(calibInputs.b) || ![wa.x, wa.z, wb.x, wb.z].every(Number.isFinite)) {
+            return alert('点A・点Bの座標 (x, z) を数値で入力してください。');
+          }
+          if (wa.x === wb.x && wa.z === wb.z) return alert('点Aと点Bには異なる座標を入力してください。');
+          const body = {
+            name: calibName ? calibName.value.trim() : '',
+            image: calib.dataUrl,
+            calib: { a: { ...calib.a, ...wa }, b: { ...calib.b, ...wb } },
+            opacity: 1,
+            select: true
+          };
+          calibSave.disabled = true;
+          const ok = await post('/api/map_presets', body);
+          calibSave.disabled = false;
+          if (!ok) return alert('背景の保存に失敗しました。');
+          closeCalibDialog();
+          await loadPresets();
+        });
+      }
+
+      loadPresets();
+
+      async function post(path, body) {
+        try {
+          const res = await fetch(path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body ? JSON.stringify(body) : undefined
+          });
+          if (!res.ok) {
+            const detail = await res.text().catch(() => '');
+            throw new Error(`HTTP ${res.status} ${detail}`);
+          }
+          return true;
+        } catch (err) {
+          console.error('POST failed', err);
+          setStatus('送信エラー', '#fdd');
+          updatePauseOverlay(false);
+          return false;
+        }
+      }
+
+      const pauseToggleBtn = document.getElementById('pauseToggle');
+      let pauseSending = false;
+      const refreshPauseButton = () => {
+        document.body.classList.toggle('paused', !!state.pauseOn && !!state.meeConnected);
+        if (!pauseToggleBtn) return;
+        if (pauseSending) {
+          pauseToggleBtn.innerHTML = icon('pause') + '送信中…';
+          pauseToggleBtn.disabled = true;
+        } else if (state.pauseOn) {
+          pauseToggleBtn.innerHTML = icon('resume') + '停止を解除';
+          pauseToggleBtn.disabled = false;
+        } else {
+          pauseToggleBtn.innerHTML = icon('pause') + '全員停止';
+          pauseToggleBtn.disabled = false;
+        }
+      };
+      refreshPauseButton();
+      if (pauseToggleBtn) pauseToggleBtn.onclick = async () => {
+        if (pauseSending) return;
+        const nextPauseOn = !state.pauseOn;
+        pauseSending = true;
+        refreshPauseButton();
+        const ok = await post(nextPauseOn ? '/api/pause_on' : '/api/pause_off');
+        pauseSending = false;
+        if (!ok) {
+          refreshPauseButton();
+          alert(nextPauseOn ? 'PAUSE ON の送信に失敗しました。' : 'PAUSE OFF の送信に失敗しました。');
+          return;
+        }
+        state.pauseOn = nextPauseOn;
+        refreshPauseButton();
+      };
+
+      // 押すとコマンドを1回送るだけのボタン。送信中は押せないようにし、失敗したら知らせる
+      function bindActionButton(id, path, failMsg) {
+        const btn = document.getElementById(id);
+        if (!btn) return;
+        const defaultLabel = btn.innerHTML;
+        const iconEl = btn.querySelector('.ico');
+        const sendingLabel = (iconEl ? iconEl.outerHTML : '') + '送信中…';
+        btn.onclick = async () => {
+          btn.disabled = true;
+          btn.innerHTML = sendingLabel;
+          const ok = await post(path);
+          btn.disabled = false;
+          btn.innerHTML = defaultLabel;
+          if (!ok) alert(failMsg);
+        };
+      }
+      bindActionButton('gatherBtn', '/api/gather', '全員集合コマンドの送信に失敗しました。');
+      bindActionButton('cameraItemsBtn', '/api/camera_items', 'カメラ配布の送信に失敗しました。');
+      bindActionButton('reviewItemsBtn', '/api/review_items', '振り返りアイテム付与の送信に失敗しました。');
+      bindActionButton('killMobBtn', '/api/kill_mob_r50', 'モブ削除コマンドの送信に失敗しました。');
+      bindActionButton('clearFluidsSelfBtn', '/api/clear_fluids_r16_self', '水・マグマ消去コマンドの送信に失敗しました。');
+
+      // 飛行能力の ON/OFF はサーバーの state.mayflyOn に合わせて表示する
+      const mayflyBtn = document.getElementById('mayflyToggle');
+      let mayflySending = false;
+      const refreshMayflyButton = () => {
+        if (!mayflyBtn) return;
+        if (mayflySending) {
+          mayflyBtn.innerHTML = icon('fly') + '送信中…';
+        } else {
+          mayflyBtn.innerHTML = state.mayflyOn
+            ? icon('fly') + '飛行能力<span class="sub">ON・押して解除</span>'
+            : icon('fly') + '飛行能力<span class="sub">OFF</span>';
+        }
+        mayflyBtn.classList.toggle('active', state.mayflyOn);
+        mayflyBtn.disabled = mayflySending;
+      };
+      refreshMayflyButton();
+      if (mayflyBtn) mayflyBtn.onclick = async () => {
+        if (mayflySending) return;
+        const nextState = !state.mayflyOn;
+        mayflySending = true;
+        refreshMayflyButton();
+        const ok = await post('/api/mayfly', { enable: nextState });
+        mayflySending = false;
+        if (!ok) {
+          refreshMayflyButton();
+          alert(nextState ? '飛行能力の付与に失敗しました。' : '飛行能力の解除に失敗しました。');
+          return;
+        }
+        state.mayflyOn = nextState;
+        refreshMayflyButton();
+      };
+
+      const chatInput = document.getElementById('chatMsg');
+      if (chatInput) chatInput.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' && !ev.isComposing) chatSendBtn?.click();
+      });
+      const chatSendBtn = document.getElementById('chatSend');
+      if (chatSendBtn) chatSendBtn.onclick = async () => {
+        const input = document.getElementById('chatMsg');
+        const msg = input ? input.value.trim() : '';
+        if (!msg) return;
+        const ok = await post('/api/chat_send', { message: msg });
+        if (!ok) {
+          alert('チャット送信に失敗しました。');
+          return;
+        }
+        if (input) input.value = '';
+      };
+
+      window.addEventListener('unhandledrejection', (ev) => {
+        ev.preventDefault();
+        console.error('Unhandled promise rejection', ev.reason);
+        setStatus('送信エラー', '#fdd');
+        updatePauseOverlay(false);
+      });
+
+    })();
+  </script>
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+<!-- <!doctype html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>MEE Teacher Panel</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
     }
 
     body {
@@ -1009,4 +3545,4 @@
   </script>
 </body>
 
-</html>
+</html> -->

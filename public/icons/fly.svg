@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <title>飛行能力（つばさ）</title>
+  <path fill="#1b1d22" d="M10 1h4v1h-4zM8 2h2v1h-2zM14 2h1v1h-1zM6 3h2v1h-2zM14 3h1v1h-1zM4 4h2v1h-2zM14 4h1v1h-1zM2 5h2v1h-2zM14 5h1v1h-1zM1 6h1v1h-1zM14 6h1v1h-1zM1 7h6v1h-6zM14 7h1v1h-1zM3 8h1v1h-1zM14 8h1v1h-1zM3 9h5v1h-5zM14 9h1v1h-1zM5 10h1v1h-1zM14 10h1v1h-1zM5 11h5v1h-5zM14 11h1v1h-1zM7 12h1v1h-1zM14 12h1v1h-1zM7 13h8v1h-8z"/>
+  <path fill="#ffffff" d="M10 2h4v1h-4zM8 3h6v1h-6zM6 4h8v1h-8zM4 5h10v1h-10zM2 6h4v1h-4zM9 6h5v1h-5zM12 7h2v1h-2zM13 8h1v1h-1z"/>
+  <path fill="#c9d1dc" d="M6 6h3v1h-3z"/>
+  <path fill="#bfe9ff" d="M7 7h5v1h-5zM4 8h9v1h-9zM13 9h1v1h-1z"/>
+  <path fill="#4aa3ff" d="M8 9h5v1h-5zM6 10h8v1h-8z"/>
+  <path fill="#1f62c4" d="M10 11h4v1h-4zM8 12h6v1h-6z"/>
+</svg>

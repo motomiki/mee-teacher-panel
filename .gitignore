@@ -5,7 +5,7 @@ node_modules/
 dist/
 release/
 out/
-build/
+# build/ は electron-builder の入力（アプリのアイコン）なので追跡する
 *.asar
 *.asar.unpacked/
 *.blockmap
@@ -56,6 +56,9 @@ tsconfig.tsbuildinfo
 Thumbs.db
 desktop.ini
 Icon?
+# Windows は大文字小文字を区別しないため Icon? が icons/ にも当たる。画面とアプリのアイコンは追跡する
+!public/icons/
+!build/icons/
 
 # Other temporary files
 *.swp
@@ -70,3 +73,17 @@ temp/
 
 # Documentation
 AGENTS.md
+
+# PC固有のローカルスクリプト（NAS起動用など）
+local/
+NAS起動手順.md
+
+# 旧版の名残（現在の画面とは対応していない）
+server.js
+run_script.cjs
+
+# Claude Code のローカル設定
+.claude/
+
+# 作業用のスクリーンショット
+/*.png
