@@ -2,6 +2,8 @@
 
 Minecraft Education（教育版マインクラフト）用の教員向けコントロールパネル。Electron アプリとして動き、MEE の WebSocket 接続（`/connect`）を受けてコマンド送信・イベント受信を行う。
 
+![MEE Teacher Panel の画面（左：操作ボタン、中央：ワールドから生成した背景地図と位置マップ、右：参加者・チャット）](img/MEE_Teacher_Panel-03.png)
+
 ## 機能
 
 - **一時停止/再開（PAUSE ON/OFF）**：停止時はまず全員の `canMove` タグを外し、先生（接続元 `@s`）にだけ付け直して除外する。タグのない全員を `inputpermission`（movement / camera を disabled）で凍結して adventure にする。`inputpermission` が失敗した接続では slowness / mining_fatigue（255、パーティクル非表示）に自動で切り替える（方式は接続ごとに判定し直す）。タイトル「ストップ／話を聞く時間だよ」を表示。停止中は 5 秒ごとに凍結と actionbar 表示を再適用し、入室・リスポーンした生徒はすぐ止める（許可済みの生徒は除く）。停止中に再接続した場合も維持を再開する。解除時は全員の inputpermission を enabled に戻し、effect clear・title clear・creative。
@@ -43,6 +45,12 @@ npm start
 ```
 
 起動すると接続画面に `/connect 127.0.0.1:8080` が表示されるので、MEE（先生のクライアント）のチャットで実行する。
+
+![起動直後の接続画面。/connect コマンドをコピーして MEE のチャットに入力する](img/MEE_Teacher_Panel-01.png)
+
+接続すると接続画面が閉じ、右上の表示が「稼働中」になる。MEE とパネルを並べて使う。
+
+![接続後。左が MEE、右がパネル（先生の位置が ★ で地図に表示される）](img/MEE_Teacher_Panel-02.png)
 
 > **ネットワークドライブ上では `npm start` が起動しない**（`GPU process launch failed: error_code=18`）。Windows の制限で、Electron の子プロセスをネットワーク上の exe から起動できないため。ローカルディスクに置いて実行するか、Electron 本体をローカルにコピーして起動するスクリプトを使う。
 
