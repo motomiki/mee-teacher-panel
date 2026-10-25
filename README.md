@@ -88,5 +88,3 @@ MEE ──WebSocket :8080──▶ main.js ──SSE /events──▶ public/ind
 - `public/icons/`：画面で使うドット絵アイコン（16×16 の SVG）。
 - `build/icons/`：アプリのアイコン（electron-builder が使う）。
 - `package.json`：依存関係、スクリプト、electron-builder の設定。
-
-`main.js` と `public/index.html` の後半には旧版のコードがコメントアウトで残っている。
