@@ -88,3 +88,9 @@ MEE ──WebSocket :8080──▶ main.js ──SSE /events──▶ public/ind
 - `public/icons/`：画面で使うドット絵アイコン（16×16 の SVG）。
 - `build/icons/`：アプリのアイコン（electron-builder が使う）。
 - `package.json`：依存関係、スクリプト、electron-builder の設定。
+
+## ライセンス
+
+[MIT License](LICENSE) © 2025-2026 KimitomoTadano
+
+本ソフトウェアは Mojang Studios および Microsoft の公式製品ではなく、両社とは関係ありません。Minecraft は Mojang Synergies AB の商標です。

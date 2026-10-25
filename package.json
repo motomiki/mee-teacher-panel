@@ -59,5 +59,6 @@
     }
   },
   "description": "Teacher control panel for Minecraft Education Edition",
-  "author": ""
+  "author": "KimitomoTadano",
+  "license": "MIT"
 }
