@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <title>授業準備（太陽）</title>
+  <path fill="#1b1d22" d="M5 4h6v1h-6zM4 5h1v6h-1zM11 5h1v6h-1zM5 11h6v1h-6z"/>
+  <path fill="#ffd84d" d="M5 5h6v6h-6z"/>
+  <path fill="#e0a100" d="M7 1h2v2h-2zM7 13h2v2h-2zM1 7h2v2h-2zM13 7h2v2h-2zM2 2h1v1h-1zM3 3h1v1h-1zM13 2h1v1h-1zM12 3h1v1h-1zM2 13h1v1h-1zM3 12h1v1h-1zM13 13h1v1h-1zM12 12h1v1h-1z"/>
+</svg>

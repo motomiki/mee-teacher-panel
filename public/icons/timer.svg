@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <title>タイマー（時計）</title>
+  <path fill="#1b1d22" d="M5 1h6v1h-6zM3 2h2v1h-2zM11 2h2v1h-2zM2 3h1v1h-1zM13 3h1v1h-1zM1 4h1v8h-1zM14 4h1v8h-1zM2 12h1v1h-1zM13 12h1v1h-1zM3 13h2v1h-2zM11 13h2v1h-2zM5 14h6v1h-6zM7 4h1v5h-1z"/>
+  <path fill="#ffffff" d="M5 2h6v1h-6zM3 3h10v1h-10zM2 4h5v8h-5zM8 4h6v4h-6zM11 8h3v1h-3zM8 9h6v3h-6zM7 9h1v3h-1zM3 12h10v1h-10zM5 13h6v1h-6z"/>
+  <path fill="#e04a3f" d="M8 8h3v1h-3z"/>
+</svg>

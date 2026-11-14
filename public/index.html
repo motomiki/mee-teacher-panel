@@ -468,9 +468,13 @@
         overflow: auto;
       }
 
+      /* 狭い幅：ページ全体をスクロールさせ、1 行目（操作＋地図）は画面の高さぶん確保する。
+         以前は .app の高さが画面に固定され、行が 420px のまま伸びずに地図カードの文字が枠外へはみ出していた */
       .app {
+        flex: none;
         grid-template-columns: 180px minmax(0, 1fr);
-        grid-auto-rows: minmax(420px, auto);
+        grid-template-rows: max(420px, calc(100vh - 90px));
+        grid-auto-rows: auto;
       }
 
       .side-right {
@@ -585,11 +589,17 @@
     .map-card {
       display: flex;
       flex-direction: column;
+      /* 説明を開いて中身が増えても枠からはみ出さず、カード内でスクロールさせる */
+      overflow: auto;
     }
 
+    /* キャンバスは .map-wrap いっぱいに絶対配置する（中身の高さに地図の大きさが引きずられないように） */
     #map {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
+      box-sizing: border-box;
       border: 1px solid var(--border);
       border-radius: 8px;
       display: block;
@@ -617,6 +627,55 @@
     .map-footer button {
       font-size: 12px;
       padding: 2px 8px;
+    }
+
+    .map-footer .map-bg-summary {
+      margin-left: auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    #mapHelpToggle[aria-expanded="true"] {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* 地図の見かた（詳細説明）：初期は閉じておき、ボタンで開く */
+    .map-help {
+      flex: none;
+      margin-top: 6px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .map-help dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 2px 10px;
+    }
+
+    .map-help dt {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .map-help dd {
+      margin: 0;
+    }
+
+    .map-help #mapBgInfo {
+      margin-top: 6px;
     }
 
     .map-toolbar {
@@ -845,6 +904,226 @@
       font-size: 12px;
     }
 
+    /* ---------- 左：折りたためるグループ（タイマー・お知らせ・授業準備） ---------- */
+    .controls details.group {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .controls details.group>summary {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      padding: 2px 0;
+    }
+
+    .controls details.group>summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .controls details.group>summary::before {
+      content: "▾ ";
+    }
+
+    .controls details.group:not([open])>summary::before {
+      content: "▸ ";
+    }
+
+    .controls details.group>*:not(summary) {
+      margin-top: 4px;
+    }
+
+    .controls .field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .controls .field input[type="number"] {
+      width: 64px;
+      padding: 4px 6px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+
+    .controls .field select {
+      flex: 1;
+      min-width: 0;
+      font-size: 12px;
+      padding: 3px 4px;
+    }
+
+    .controls label.check {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    #announceList button {
+      font-size: 13px;
+      padding: 6px 8px;
+    }
+
+    .controls button.small {
+      font-size: 12px;
+      padding: 4px 8px;
+      justify-content: center;
+      color: var(--muted);
+    }
+
+    .controls button .sub.on {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .timer-remain {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      padding: 4px;
+      border-radius: 6px;
+      background: #f1f3f6;
+      color: var(--text);
+    }
+
+    /* ゲーム内の表示と同じ区切り：3分以下＝水色、1分以下＝ピンク */
+    .timer-remain.warn {
+      background: #e0f5fb;
+      color: #0a7d99;
+    }
+
+    .timer-remain.last {
+      background: #fde8f1;
+      color: #c2185b;
+    }
+
+    /* ---------- 地図：オプション行・メニュー ---------- */
+    .map-options {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 6px 14px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .map-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .map-options select {
+      font-size: 12px;
+      padding: 2px 4px;
+    }
+
+    a.linkbtn {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--accent);
+      text-decoration: none;
+      margin-left: auto;
+    }
+
+    a.linkbtn:hover {
+      text-decoration: underline;
+    }
+
+    .map-menu {
+      position: absolute;
+      z-index: 3;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+      padding: 4px;
+      min-width: 180px;
+    }
+
+    .map-menu.hide {
+      display: none;
+    }
+
+    .map-menu .menu-title {
+      font-size: 11px;
+      color: var(--muted);
+      padding: 2px 8px 4px;
+    }
+
+    .map-menu button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: none;
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+
+    /* ---------- 離れすぎの警告 ---------- */
+    .roster-row.alert {
+      background: #fff3f0;
+    }
+
+    .roster-row.alert .meta {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .count.alert {
+      color: #fff;
+      background: var(--danger);
+    }
+
+    /* ---------- 画面下の通知 ---------- */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      max-width: min(560px, 90vw);
+      background: rgba(30, 30, 30, 0.94);
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 8px 14px;
+      border-radius: 8px;
+      z-index: 9500;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    .toast.hide {
+      display: none;
+    }
+
+    .settings-window textarea,
+    .settings-window input[type="text"] {
+      width: 100%;
+      font: inherit;
+      font-size: 14px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+
+    .settings-window label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -891,7 +1170,7 @@
   <div id="worldMapOverlay" class="calib-overlay hide">
     <div class="calib-window" style="width:min(520px,100%)">
       <h2>ワールドから背景地図を生成</h2>
-      <div class="muted">この PC に保存されているワールドのデータを読み、真上から見た地図を作ります。位置合わせは不要です。授業中に建てたものは、ゲームの自動保存の後に生成し直すと反映されます。<br>地図の白い部分は、ゲームがまだ保存していない場所です。ワールドを一度終了するか、自動保存の後に生成し直すと広がります。</div>
+      <div class="muted">この PC に保存されているワールドのデータを読み、真上から見た地図を作ります。位置合わせは不要です。授業中に建てたものは、ゲームの自動保存の後に反映されます（「地図を自動更新」が ON なら自動で作り直します）。<br>グレーの部分は、まだ記録されていない場所です。Minecraft はブロックに変化のあった場所しか保存しないため、歩いただけの場所は地図に出ません。「歩いた場所を地図に記録」を ON にすると、プレイヤーの周りが順に地図へ反映されます。</div>
       <div class="row" style="margin-top:8px">
         <label>ワールド <select id="worldMapWorld" style="max-width:300px"></select></label>
       </div>
@@ -945,6 +1224,25 @@
       </div>
     </div>
   </div>
+  <div id="textsOverlay" class="calib-overlay hide">
+    <div class="calib-window settings-window" style="width:min(480px,100%)">
+      <h2>文言の編集</h2>
+      <label>お知らせの定型文（1行に1つ、12個まで）
+        <textarea id="textsAnnouncements" rows="6"></textarea>
+      </label>
+      <label>タイマー開始時の表示（{時間} は「10分」などに置き換わります。空欄なら表示しません）
+        <input id="textsTimerStart" type="text" maxlength="40">
+      </label>
+      <label>タイマー終了時の表示（90秒間表示されます。空欄なら表示しません）
+        <input id="textsTimerEnd" type="text" maxlength="40">
+      </label>
+      <div class="row">
+        <button id="textsSave" type="button">保存</button>
+        <button id="textsCancel" type="button">キャンセル</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast hide" role="status"></div>
   <header class="app-header">
     <h1>MEE 教師用パネル</h1>
     <span class="pause-banner"><img class="ico" src="icons/pause.svg" alt="">全員停止中</span>
@@ -964,6 +1262,40 @@
       <h3>ワールド整備</h3>
       <button id="killMobBtn" class="danger" title="先生の周囲50ブロックのモブを削除します（プレイヤー・落ちているアイテム・NPC・エージェント・カメラ・防具立て・絵画・乗り物は残ります）"><img class="ico" src="icons/mob-clear.svg" alt="">モブ削除<span class="sub">周囲50</span></button>
       <button id="clearFluidsSelfBtn" class="danger" title="先生の周囲15ブロック（31×31×31）の水・マグマを消します"><img class="ico" src="icons/fluid-clear.svg" alt="">水・マグマ消去<span class="sub">周囲15</span></button>
+
+      <details class="group" data-group="timer" open>
+        <summary>タイマー</summary>
+        <div id="timerRemain" class="timer-remain" hidden></div>
+        <label class="field"><input id="timerMinutes" type="number" min="0.1" max="180" step="any" value="10"> 分</label>
+        <button id="timerToggle" title="残り時間を全員の画面に表示します"><img class="ico" src="icons/timer.svg" alt="">タイマー開始</button>
+        <label class="check" title="時間になったら、自動で全員停止にします"><input id="timerPauseAtEnd" type="checkbox">終了時に全員停止</label>
+        <label class="check" title="開始時に夕方にして時間の流れを止め、残り3分から日が暮れていきます"><input id="timerSunset" type="checkbox">夕暮れの演出</label>
+      </details>
+
+      <details class="group" data-group="announce" open>
+        <summary>お知らせ</summary>
+        <div id="announceList" style="display:flex;flex-direction:column;gap:4px"></div>
+        <button id="announceEdit" class="small" type="button" title="定型文と、タイマーの開始・終了時の表示を変更します">文言を編集</button>
+      </details>
+
+      <details class="group" data-group="prep">
+        <summary>授業準備</summary>
+        <button data-prep="day" title="昼にして、時間が進まないようにします">昼に固定<span class="sub"></span></button>
+        <button data-prep="clear" title="晴れにして、天気が変わらないようにします">晴れに固定<span class="sub"></span></button>
+        <button data-prep="nopvp" title="プレイヤー同士で攻撃できないようにします">攻撃し合えない<span class="sub"></span></button>
+        <button data-prep="notnt" title="TNT が爆発しないようにします">TNT 無効<span class="sub"></span></button>
+        <button data-prep="nomobs" title="モブが自然に湧かないようにします">モブが湧かない<span class="sub"></span></button>
+        <button data-prep="keepinv" title="倒れても持ち物を失わないようにします">持ち物を保持<span class="sub"></span></button>
+        <button id="prepAll" class="small" type="button" title="上の6項目をすべて ON にします"><img class="ico" src="icons/prep.svg" alt="">まとめて ON</button>
+        <label class="field" title="全員停止を解除したとき、生徒をどのゲームモードにするか">解除後
+          <select id="resumeGamemode">
+            <option value="creative">クリエイティブ</option>
+            <option value="survival">サバイバル</option>
+            <option value="adventure">アドベンチャー</option>
+            <option value="keep">変更しない</option>
+          </select>
+        </label>
+      </details>
     </nav>
 
     <section class="card map-card">
@@ -974,30 +1306,60 @@
         <button id="mapBgWorld">ワールドから生成</button>
         <button id="mapBgAdd">画像から追加</button>
         <button id="mapBgDelete" disabled>削除</button>
+        <button id="mapBgRefresh" disabled title="ワールドの保存データを読み直して、背景地図を作り直します">更新</button>
       </div>
       <div class="map-wrap">
         <canvas id="map"></canvas>
         <div id="mapTooltip" class="map-tooltip hide"></div>
+        <div id="mapMenu" class="map-menu hide"></div>
       </div>
       <div class="map-footer">
-        <span>ホイール：ズーム　ドラッグ：移動　▲向き　★先生　縁の色：青＝先生より上／茶＝下　点線＝別ディメンション　薄い＝30秒以上動きなし</span>
-        <button id="mapReset">表示リセット</button>
+        <button id="mapReset" title="地図のズームと表示位置を元に戻します。参加者全員が画面に収まるように合わせ直し、その後は動きに合わせて自動で追いかけます（ドラッグやズームで自分で動かすと、追いかけは止まります）。背景地図や位置の記録は消えません。">表示リセット</button>
+        <button id="mapHelpToggle" type="button" aria-expanded="false" aria-controls="mapHelp" title="操作方法・記号の意味・背景地図の詳細を表示します">？ 地図の見かた ▾</button>
+        <span id="mapBgSummary" class="map-bg-summary" hidden></span>
       </div>
-      <div id="mapBgInfo" class="muted" style="margin-top:4px" hidden></div>
+      <div id="mapHelp" class="map-help" hidden>
+        <dl>
+          <dt>操作</dt>
+          <dd>ホイール：ズーム／ドラッグ：移動／生徒をクリック・地図を右クリック：移動メニュー</dd>
+          <dt>記号</dt>
+          <dd>▲ 向き／★ 先生</dd>
+          <dt>縁の色</dt>
+          <dd>青＝先生より上／茶＝先生より下／赤＝離れすぎ</dd>
+          <dt>その他</dt>
+          <dd>点線＝別ディメンション／薄い＝30秒以上動きなし</dd>
+        </dl>
+        <div id="mapBgInfo" hidden></div>
+      </div>
+      <div class="map-options">
+        <label title="プレイヤーの周りの地形をゲームに保存させ、歩いた場所が地図に出るようにします。チャンクの最上部に見えないブロックを一瞬置いて戻します（建築物には触れません）"><input id="optAutoRecord" type="checkbox">歩いた場所を地図に記録</label>
+        <label title="ワールドの保存データが変わったら、背景地図を自動で作り直します"><input id="optAutoRefresh" type="checkbox">地図を自動更新</label>
+        <label title="先生からこの距離以上離れた生徒を、名簿と地図で強調します">離れすぎの警告
+          <select id="optAlertDistance">
+            <option value="0">なし</option>
+            <option value="50">50 ブロック</option>
+            <option value="100">100 ブロック</option>
+            <option value="200">200 ブロック</option>
+          </select>
+        </label>
+        <span id="recordInfo"></span>
+        <a class="linkbtn" href="/api/export/positions.csv" download title="全員の位置を5秒ごとに記録したものを CSV で保存します">位置の記録を保存</a>
+      </div>
     </section>
 
     <div class="side-right">
       <section class="card roster-card">
-        <h2>参加者 <span id="rosterCount" class="count">0</span></h2>
+        <h2>参加者 <span id="rosterCount" class="count">0</span><span id="alertCount" class="count alert" hidden></span></h2>
         <div id="roster" class="muted">接続待ち…</div>
       </section>
 
       <section class="card chat-card">
-        <h2>チャット</h2>
+        <h2>チャット <a class="linkbtn" href="/api/export/chat.csv" download title="この起動中のチャットをすべて CSV で保存します">記録を保存</a></h2>
         <div id="chatlog" class="muted">生徒の発言はここに表示されます。</div>
         <div class="chat-input">
           <input id="chatMsg" placeholder="全員にメッセージを送る">
-          <button id="chatSend">送信</button>
+          <button id="chatSend" title="チャットに送ります">送信</button>
+          <button id="chatBig" title="全員の画面の中央に大きく表示します（チャットにも残ります）">大きく</button>
         </div>
       </section>
     </div>
@@ -1018,7 +1380,10 @@
       if (connectCommandText) connectCommandText.textContent = CONNECT_COMMAND;
       const ctx = mapCanvas ? mapCanvas.getContext('2d') : null;
 
-      const state = { roster: [], chat: [], pauseOn: false, mayflyOn: false, meeConnected: false, teacher: '' };
+      const state = {
+        roster: [], chat: [], pauseOn: false, mayflyOn: false, meeConnected: false, meeStalled: false, teacher: '',
+        settings: {}, timer: null, rules: {}, record: null
+      };
       const mapState = {
         histories: new Map(),
         view: {
@@ -1124,9 +1489,9 @@
       function chatKey(entry) {
         if (!entry) return '';
         const player = entry.player || '';
-        theMessage = entry.message || '';
+        const message = entry.message || '';
         const time = Number.isFinite(entry.t) ? entry.t : '';
-        return JSON.stringify([player, theMessage, time]);
+        return JSON.stringify([player, message, time]);
       }
 
       function resetChatDedup(entries) {
@@ -1206,9 +1571,22 @@
       // key: `${action}:${name}` → 表示ラベル
       const rosterActionLabels = new Map();
       const ROSTER_ACTIONS = {
+        goto: { label: '見に行く', path: '/api/goto_name', title: '先生がこの生徒の所へテレポート', fail: 'その生徒の所へ移動できませんでした。' },
         gather: { label: '集合', path: '/api/gather_name', title: '先生の位置へテレポート', fail: '個別集合コマンドの送信に失敗しました。' },
         allow: { label: '許可', path: '/api/allow_name', title: 'PAUSE 中でも動けるようにする', fail: '許可リクエストの送信に失敗しました。' }
       };
+
+      // 離れすぎの警告：先生から設定した距離以上離れている、または別のディメンションにいる生徒
+      // 戻り値は警告の文言（問題なければ空文字）
+      function alertReason(pos, teacherPos) {
+        const limit = Number(state.settings.alertDistance) || 0;
+        if (!limit || !pos || !teacherPos) return '';
+        if (Number.isFinite(pos.dim) && Number.isFinite(teacherPos.dim) && pos.dim !== teacherPos.dim) {
+          return DIMENSION_NAMES[pos.dim] ? `${DIMENSION_NAMES[pos.dim]}にいます` : '別のディメンションにいます';
+        }
+        const dist = Math.hypot(pos.x - teacherPos.x, pos.z - teacherPos.z);
+        return dist >= limit ? `先生から ${Math.round(dist)} ブロック` : '';
+      }
 
       function renderRoster() {
         if (!rosterEl) return;
@@ -1220,21 +1598,30 @@
           const bt = b.name === state.teacher ? 0 : 1;
           return at - bt || String(a.name).localeCompare(String(b.name), 'ja');
         });
+        const teacherPos = state.roster.find(p => p.name === state.teacher)?.pos || null;
+        let alerts = 0;
         const rows = list.map(p => {
           const seen = Math.max(0, Math.round((now - p.lastSeen) / 1000));
           const isTeacher = p.name === state.teacher;
           const stale = seen * 1000 >= STALE_MS;
           const pos = p.pos ? `x ${Math.round(p.pos.x)} / z ${Math.round(p.pos.z)}` : '位置不明';
-          const meta = isTeacher ? `先生　${pos}` : (stale ? `${pos}　${seen}秒 動きなし` : pos);
+          const alert = isTeacher ? '' : alertReason(p.pos, teacherPos);
+          if (alert) alerts++;
+          const meta = isTeacher ? `先生　${pos}` : alert ? `${alert}　${pos}` : (stale ? `${pos}　${seen}秒 動きなし` : pos);
           const name = escapeHtml(p.name);
           const buttons = isTeacher ? '' : Object.entries(ROSTER_ACTIONS).map(([action, a]) => {
             const label = rosterActionLabels.get(`${action}:${p.name}`);
             return `<button type="button" data-action="${action}" data-name="${name}" title="${a.title}"${label ? ' disabled' : ''}>${label || a.label}</button>`;
           }).join('');
-          return `<div class="roster-row${isTeacher ? ' teacher' : ''}${stale ? ' stale' : ''}">`
+          return `<div class="roster-row${isTeacher ? ' teacher' : ''}${stale && !alert ? ' stale' : ''}${alert ? ' alert' : ''}">`
             + `<div class="who"><div class="name">${name}</div><div class="meta">${meta}</div></div>${buttons}</div>`;
         }).join('');
         rosterEl.innerHTML = rows || '<div class="muted">プレイヤー未接続</div>';
+        const alertEl = document.getElementById('alertCount');
+        if (alertEl) {
+          alertEl.hidden = !alerts;
+          alertEl.textContent = `離れすぎ ${alerts}`;
+        }
       }
 
       if (rosterEl) rosterEl.addEventListener('click', async (ev) => {
@@ -1247,11 +1634,11 @@
         const key = `${action}:${name}`;
         rosterActionLabels.set(key, '送信中…');
         renderRoster();
-        const ok = await post(a.path, { name });
-        if (!ok) {
+        const result = await postJson(a.path, { name });
+        if (!result.ok) {
           rosterActionLabels.delete(key);
           renderRoster();
-          alert(a.fail);
+          showToast(result.error || a.fail);
           return;
         }
         rosterActionLabels.set(key, '✓');
@@ -1501,7 +1888,7 @@
       }
 
       /* ---------- 背景（画像＋グリッド） ---------- */
-      const bgState = { presets: [], selectedId: null, image: null, transform: null, opacity: 1, version: 0 };
+      const bgState = { presets: [], selectedId: null, image: null, imageId: null, fromWorld: false, transform: null, opacity: 1, version: 0 };
       const bgCache = { canvas: document.createElement('canvas'), key: '' };
 
       // 画像座標 p=(px,py) → ワールド w=(x,z) を複素数の相似変換 w = a·p + b で表す（拡大・回転・平行移動）
@@ -1545,6 +1932,11 @@
               (tf.br - view.centerX) * s + dims.w / 2,
               (tf.bi - view.centerZ) * s + dims.h / 2);
             c.globalAlpha = bgState.opacity;
+            // ワールドから生成した地図は、まだ記録されていない場所が透明。白ではなくグレーで見せる
+            if (bgState.fromWorld) {
+              c.fillStyle = '#dde1e6';
+              c.fillRect(0, 0, bgState.image.naturalWidth, bgState.image.naturalHeight);
+            }
             // 1画素が大きく表示されるほど拡大したらドット感を保つ
             c.imageSmoothingEnabled = Math.hypot(tf.ar, tf.ai) * s * dims.dpr < 2;
             c.drawImage(bgState.image, 0, 0);
@@ -1823,6 +2215,19 @@
         } else {
           drawTrails(ctx, active, dims, sNow, renderTime);
           const teacher = active.find(a => a.isTeacher);
+          // 離れすぎの警告：先生を中心に、設定した距離の円を描く
+          const alertLimit = Number(state.settings.alertDistance) || 0;
+          if (teacher && alertLimit) {
+            const center = worldToScreen(teacher.pos.x, teacher.pos.z, dims);
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(center.x, center.y, alertLimit * (mapState.view.scale || 1), 0, Math.PI * 2);
+            ctx.setLineDash([6, 4]);
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(201,64,64,0.7)';
+            ctx.stroke();
+            ctx.restore();
+          }
           active.forEach(item => {
             item.pt = worldToScreen(item.pos.x, item.pos.z, dims);
             item.angle = headingAngle(item.pos, item.history);
@@ -1834,6 +2239,9 @@
             item.otherDim = !!teacher && !item.isTeacher &&
               Number.isFinite(teacher.latest.dim) && Number.isFinite(item.latest.dim) &&
               teacher.latest.dim !== item.latest.dim;
+            if (teacher && !item.isTeacher && alertReason({ ...item.pos, dim: item.latest.dim }, { ...teacher.pos, dim: teacher.latest.dim })) {
+              item.ringColor = '#e02020';
+            }
           });
           // 放置中 → 生徒 → 先生の順に重ねて、先生を最前面にする
           active.sort((a, b) => b.stale - a.stale || a.isTeacher - b.isTeacher);
@@ -1873,13 +2281,27 @@
           state.pauseOn = !!data.pauseOn;
           state.mayflyOn = !!data.mayflyOn;
           state.meeConnected = !!data.meeConnected;
+          state.meeStalled = !!data.meeStalled;
           state.teacher = typeof data.teacher === 'string' ? data.teacher : '';
+          state.settings = data.settings && typeof data.settings === 'object' ? data.settings : {};
+          state.timer = data.timer && Number.isFinite(data.timer.endAt) ? data.timer : null;
+          state.rules = data.rules && typeof data.rules === 'object' ? data.rules : {};
+          state.record = data.record || null;
         } catch { return; }
         refreshMayflyButton();
-        if (state.meeConnected) {
-          setStatus(state.pauseOn ? 'PAUSE維持中' : '稼働中', state.pauseOn ? '#ffe8a3' : '#eef');
-        } else {
+        refreshSettingsUi();
+        refreshTimerUi();
+        refreshPrepUi();
+        refreshRecordInfo();
+        if (!state.meeConnected) {
           setStatus('接続待ち', '#fdd');
+        } else if (state.meeStalled) {
+          // ゲームがメニュー表示などで一時停止しているか、通信が切れかけている
+          setStatus('応答なし', '#ffd9a8');
+          if (statusEl) statusEl.title = 'Minecraft から 20 秒以上応答がありません。ゲームが一時停止中か、接続が切れた可能性があります。';
+        } else {
+          if (statusEl) statusEl.title = '';
+          setStatus(state.pauseOn ? 'PAUSE維持中' : '稼働中', state.pauseOn ? '#ffe8a3' : '#eef');
         }
         updateConnectionOverlay();
         refreshPauseButton();
@@ -1902,7 +2324,7 @@
           pushHistoryPoint(p.name, p);
           const entry = state.roster.find(r => r.name === p.name);
           if (entry) {
-            entry.pos = { x: p.x, y: p.y, z: p.z };
+            entry.pos = { x: p.x, y: p.y, z: p.z, dim: p.dim };
             entry.lastSeen = Date.now();
           }
         });
@@ -1910,6 +2332,13 @@
         scheduleRosterRender();
         requestRender();
       });
+      // 自動記録の進み具合
+      es.addEventListener('record', ev => {
+        try { state.record = JSON.parse(ev.data); } catch { return; }
+        refreshRecordInfo();
+      });
+      // 背景地図が作り直された
+      es.addEventListener('map', () => { loadPresets(); });
       es.addEventListener('chat', ev => {
         let entry;
         try {
@@ -1928,17 +2357,16 @@
 
       if (mapCanvas) {
         mapCanvas.addEventListener('pointerdown', ev => {
-          mapState.view.autoFit = false;
-          mapState.view.targetCenterX = mapState.view.centerX;
-          mapState.view.targetCenterZ = mapState.view.centerZ;
-          mapState.view.targetScale = mapState.view.scale || 1;
-          mapState.view.initialized = true;
+          hideMapMenu();
+          if (ev.button !== 0) return;
+          // 少し動かすまではクリック扱い（生徒をクリックするとメニューが開く）
           mapState.pointer.dragging = true;
+          mapState.pointer.moved = false;
           mapState.pointer.x = ev.clientX;
           mapState.pointer.y = ev.clientY;
+          mapState.pointer.startX = ev.clientX;
+          mapState.pointer.startY = ev.clientY;
           try { mapCanvas.setPointerCapture(ev.pointerId); } catch (_) { }
-          mapCanvas.classList.add('dragging');
-          requestRender();
         });
         mapCanvas.addEventListener('pointermove', ev => {
           if (!mapState.pointer.dragging) {
@@ -1959,6 +2387,17 @@
             }
             return;
           }
+          if (!mapState.pointer.moved) {
+            if (Math.hypot(ev.clientX - mapState.pointer.startX, ev.clientY - mapState.pointer.startY) < 4) return;
+            // ここからドラッグ：自動フィットをやめて手動の表示にする
+            mapState.pointer.moved = true;
+            mapState.view.autoFit = false;
+            mapState.view.targetCenterX = mapState.view.centerX;
+            mapState.view.targetCenterZ = mapState.view.centerZ;
+            mapState.view.targetScale = mapState.view.scale || 1;
+            mapState.view.initialized = true;
+            mapCanvas.classList.add('dragging');
+          }
           const dx = ev.clientX - mapState.pointer.x;
           const dy = ev.clientY - mapState.pointer.y;
           mapState.pointer.x = ev.clientX;
@@ -1977,8 +2416,19 @@
           if (ev && ev.pointerId !== undefined) {
             try { mapCanvas.releasePointerCapture(ev.pointerId); } catch (_) { }
           }
+          // 動かさずに離した＝クリック。生徒のマーカーの上ならメニューを開く
+          if (ev && ev.type === 'pointerup' && !mapState.pointer.moved) {
+            const hit = markerAt(ev);
+            if (hit && !hit.isTeacher) openStudentMenu(hit.name, ev);
+          }
           requestRender();
         };
+        mapCanvas.addEventListener('contextmenu', ev => {
+          ev.preventDefault();
+          const hit = markerAt(ev);
+          if (hit && !hit.isTeacher) openStudentMenu(hit.name, ev);
+          else openPointMenu(ev);
+        });
         ['pointerup', 'pointercancel', 'pointerleave'].forEach(name => {
           mapCanvas.addEventListener(name, releasePointer);
         });
@@ -1987,6 +2437,7 @@
         });
         mapCanvas.addEventListener('wheel', ev => {
           ev.preventDefault();
+          hideMapMenu();
           mapState.view.autoFit = false;
           const dims = ensureCanvasSize();
           if (!dims.w || !dims.h) return;
@@ -2018,11 +2469,35 @@
         });
       }
 
+      /* ---------- 地図の見かた（詳細説明の開閉） ---------- */
+      // 初期は閉じて地図を大きく見せる。開閉状態はこの PC に覚えておく
+      const mapHelpToggle = document.getElementById('mapHelpToggle');
+      const mapHelp = document.getElementById('mapHelp');
+      if (mapHelpToggle && mapHelp) {
+        const HELP_KEY = 'mapHelpOpen';
+        const setHelpOpen = (open) => {
+          mapHelp.hidden = !open;
+          mapHelpToggle.setAttribute('aria-expanded', String(open));
+          mapHelpToggle.textContent = open ? '？ 地図の見かた ▴' : '？ 地図の見かた ▾';
+          requestRender();
+        };
+        let initialOpen = false;
+        try { initialOpen = localStorage.getItem(HELP_KEY) === '1'; } catch { /* 保存できない環境では毎回閉じた状態 */ }
+        setHelpOpen(initialOpen);
+        mapHelpToggle.addEventListener('click', () => {
+          const open = mapHelp.hidden;
+          setHelpOpen(open);
+          try { localStorage.setItem(HELP_KEY, open ? '1' : '0'); } catch { /* 無視 */ }
+        });
+      }
+
       /* ---------- 背景プリセット ---------- */
       const bgSelect = document.getElementById('mapBgSelect');
       const bgOpacity = document.getElementById('mapBgOpacity');
       const bgAddBtn = document.getElementById('mapBgAdd');
       const bgDeleteBtn = document.getElementById('mapBgDelete');
+      const bgRefreshBtn = document.getElementById('mapBgRefresh');
+      let bgRefreshing = false;
 
       function currentPreset() {
         return bgState.presets.find(p => p.id === bgState.selectedId) || null;
@@ -2045,37 +2520,57 @@
         const has = !!currentPreset();
         if (bgOpacity) bgOpacity.disabled = !has;
         if (bgDeleteBtn) bgDeleteBtn.disabled = !has;
+        if (bgRefreshBtn) bgRefreshBtn.disabled = bgRefreshing || !currentPreset()?.source?.worldId;
       }
 
       // ワールドから生成した背景なら、何チャンク分の地形から作ったかを表示する
       function showBgInfo(preset) {
+        // 詳細文は「地図の見かた」パネル内、短いサマリはフッターに出す
         const el = document.getElementById('mapBgInfo');
-        if (!el) return;
+        const summary = document.getElementById('mapBgSummary');
         const src = preset?.source;
         if (!src || !src.chunkCount) {
-          el.hidden = true;
+          if (el) el.hidden = true;
+          if (summary) summary.hidden = true;
           return;
         }
         const at = src.generatedAt ? new Date(src.generatedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '';
-        el.textContent = `背景：保存済みの ${src.chunkCount} チャンクから生成（${src.width}×${src.height} ブロック${at ? `、${at}` : ''}）。白い部分はゲームがまだ保存していない場所です。`;
-        el.hidden = false;
+        if (el) {
+          el.textContent = `背景：保存済みの ${src.chunkCount} チャンクから生成（${src.width}×${src.height} ブロック${at ? `、${at}` : ''}）。グレーの部分はまだ記録されていない場所です。「歩いた場所を地図に記録」が ON なら、歩いた場所が順に反映されます。`;
+          el.hidden = false;
+        }
+        if (summary) {
+          summary.textContent = `背景：${src.chunkCount} チャンク${at ? `・${at}` : ''}`;
+          summary.title = '詳しくは「地図の見かた」を開いてください';
+          summary.hidden = false;
+        }
       }
 
       function applySelectedPreset() {
         const preset = currentPreset();
-        bgState.transform = preset ? computeCalibTransform(preset.calib) : null;
+        const id = preset ? preset.id : null;
+        // 同じ背景の作り直し（自動更新など）では、新しい画像が読めるまで古い画像と位置合わせを残して、ちらつきを防ぐ
+        const keepOld = !!preset && bgState.imageId === id && !!bgState.image;
+        const transform = preset ? computeCalibTransform(preset.calib) : null;
         bgState.opacity = preset && Number.isFinite(preset.opacity) ? preset.opacity : 1;
-        bgState.image = null;
+        if (!keepOld) {
+          bgState.image = null;
+          bgState.imageId = null;
+          bgState.transform = transform;
+          bgState.fromWorld = !!preset?.source?.worldId;
+        }
         bgState.version++;
         if (bgOpacity) bgOpacity.value = Math.round(bgState.opacity * 100);
         showBgInfo(preset);
         requestRender();
         if (!preset) return;
-        const id = preset.id;
         const img = new Image();
         img.onload = () => {
           if (bgState.selectedId !== id) return;
           bgState.image = img;
+          bgState.imageId = id;
+          bgState.transform = transform;
+          bgState.fromWorld = !!preset.source?.worldId;
           bgState.version++;
           requestRender();
         };
@@ -2511,6 +3006,343 @@
         }
         if (input) input.value = '';
       };
+
+      /* ---------- 共通：結果つきの送信・画面下の通知 ---------- */
+      // 失敗の理由（ゲームからのメッセージなど）を受け取りたい操作に使う。{ ok, error, data } を返す
+      async function postJson(path, body) {
+        try {
+          const res = await fetch(path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body ? JSON.stringify(body) : undefined
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok) return { ok: true, data };
+          const error = data.error === 'MEE 未接続'
+            ? 'Minecraft と接続されていません。'
+            : (data.error || `送信に失敗しました（HTTP ${res.status}）`);
+          return { ok: false, error };
+        } catch (err) {
+          console.error('POST failed', path, err);
+          return { ok: false, error: 'パネル内部の通信に失敗しました。アプリを起動し直してください。' };
+        }
+      }
+
+      const toastEl = document.getElementById('toast');
+      let toastTimer = null;
+      function showToast(text, ms = 6000) {
+        if (!toastEl || !text) return;
+        toastEl.textContent = text;
+        toastEl.classList.remove('hide');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.add('hide'), ms);
+      }
+
+      async function saveSettings(patch) {
+        Object.assign(state.settings, patch);
+        const result = await postJson('/api/settings', patch);
+        if (!result.ok) showToast(result.error);
+        return result.ok;
+      }
+
+      /* ---------- 設定（チェックボックス・選択） ---------- */
+      const settingChecks = {
+        autoRecord: document.getElementById('optAutoRecord'),
+        autoRefreshMap: document.getElementById('optAutoRefresh'),
+        timerPauseAtEnd: document.getElementById('timerPauseAtEnd'),
+        timerSunset: document.getElementById('timerSunset')
+      };
+      const alertSelect = document.getElementById('optAlertDistance');
+      const gamemodeSelect = document.getElementById('resumeGamemode');
+      const timerMinutesInput = document.getElementById('timerMinutes');
+      const groupEls = Array.from(document.querySelectorAll('details.group[data-group]'));
+      let settingsApplied = false;
+
+      function refreshSettingsUi() {
+        const s = state.settings;
+        for (const [key, el] of Object.entries(settingChecks)) {
+          if (el) el.checked = !!s[key];
+        }
+        if (alertSelect) {
+          const value = String(Number(s.alertDistance) || 0);
+          if (!Array.from(alertSelect.options).some(o => o.value === value)) {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = `${value} ブロック`;
+            alertSelect.appendChild(opt);
+          }
+          alertSelect.value = value;
+        }
+        if (gamemodeSelect && s.resumeGamemode) gamemodeSelect.value = s.resumeGamemode;
+        if (timerMinutesInput && document.activeElement !== timerMinutesInput && Number.isFinite(Number(s.timerMinutes))) {
+          timerMinutesInput.value = String(Math.round(Number(s.timerMinutes) * 100) / 100);
+        }
+        renderAnnouncements();
+        // 折りたたみは最初の1回だけ保存内容に合わせる（以後は操作した状態を優先）
+        if (!settingsApplied) {
+          settingsApplied = true;
+          groupEls.forEach(el => {
+            const collapsed = s.collapsed ? s.collapsed[el.dataset.group] : undefined;
+            if (collapsed !== undefined) el.open = !collapsed;
+          });
+        }
+      }
+
+      for (const [key, el] of Object.entries(settingChecks)) {
+        if (el) el.addEventListener('change', async () => {
+          await saveSettings({ [key]: el.checked });
+          refreshRecordInfo();
+        });
+      }
+      if (alertSelect) alertSelect.addEventListener('change', async () => {
+        await saveSettings({ alertDistance: Number(alertSelect.value) });
+        renderRoster();
+        requestRender();
+      });
+      if (gamemodeSelect) gamemodeSelect.addEventListener('change', () => saveSettings({ resumeGamemode: gamemodeSelect.value }));
+      groupEls.forEach(el => el.addEventListener('toggle', () => {
+        if (!settingsApplied) return;
+        const collapsed = { ...(state.settings.collapsed || {}) };
+        if (!!collapsed[el.dataset.group] === !el.open) return;
+        collapsed[el.dataset.group] = !el.open;
+        saveSettings({ collapsed });
+      }));
+
+      /* ---------- 自動記録の進み具合・地図の更新 ---------- */
+      function refreshRecordInfo() {
+        const el = document.getElementById('recordInfo');
+        if (!el) return;
+        const r = state.record;
+        if (!state.settings.autoRecord || !state.meeConnected || !r) el.textContent = '';
+        else if (r.disabled) el.textContent = 'このワールドでは記録できません（コマンドが使えないようです）';
+        else if (r.queued) el.textContent = `記録中… 残り ${r.queued} チャンク`;
+        else el.textContent = r.done ? `${r.done} チャンクを記録済み` : '';
+      }
+
+      if (bgRefreshBtn) bgRefreshBtn.addEventListener('click', async () => {
+        if (bgRefreshing) return;
+        bgRefreshing = true;
+        bgRefreshBtn.textContent = '更新中…';
+        renderPresetOptions();
+        const result = await postJson('/api/worldmap/refresh');
+        bgRefreshing = false;
+        bgRefreshBtn.textContent = '更新';
+        if (!result.ok) showToast(`地図を更新できませんでした：${result.error}`);
+        await loadPresets();
+      });
+
+      /* ---------- 地図のメニュー（生徒をクリック／地点を右クリック） ---------- */
+      const mapMenu = document.getElementById('mapMenu');
+
+      function markerAt(ev) {
+        const rect = mapCanvas.getBoundingClientRect();
+        const sx = ev.clientX - rect.left;
+        const sy = ev.clientY - rect.top;
+        let best = null;
+        let bestDist = HOVER_RADIUS;
+        mapState.drawn.forEach(d => {
+          const dist = Math.hypot(d.pt.x - sx, d.pt.y - sy);
+          if (dist <= bestDist) { best = d; bestDist = dist; }
+        });
+        return best;
+      }
+
+      function hideMapMenu() {
+        if (mapMenu) mapMenu.classList.add('hide');
+      }
+
+      function showMapMenu(ev, title, items) {
+        if (!mapMenu) return;
+        mapMenu.innerHTML = '';
+        const head = document.createElement('div');
+        head.className = 'menu-title';
+        head.textContent = title;
+        mapMenu.appendChild(head);
+        items.forEach(item => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = item.label;
+          btn.addEventListener('click', () => { hideMapMenu(); item.run(); });
+          mapMenu.appendChild(btn);
+        });
+        mapMenu.classList.remove('hide');
+        const rect = mapCanvas.getBoundingClientRect();
+        const x = Math.min(ev.clientX - rect.left, rect.width - mapMenu.offsetWidth - 4);
+        const y = Math.min(ev.clientY - rect.top, rect.height - mapMenu.offsetHeight - 4);
+        mapMenu.style.left = `${Math.max(0, x)}px`;
+        mapMenu.style.top = `${Math.max(0, y)}px`;
+      }
+
+      async function runMenuAction(path, body, doneText) {
+        const result = await postJson(path, body);
+        showToast(result.ok ? doneText : result.error, result.ok ? 2000 : 7000);
+      }
+
+      function openStudentMenu(name, ev) {
+        showMapMenu(ev, name, [
+          { label: '見に行く（先生が移動）', run: () => runMenuAction('/api/goto_name', { name }, `${name} の所へ移動しました`) },
+          { label: '先生の所へ集合させる', run: () => runMenuAction('/api/gather_name', { name }, `${name} を集合させました`) },
+          { label: '停止中でも動けるよう許可', run: () => runMenuAction('/api/allow_name', { name }, `${name} を許可しました`) }
+        ]);
+      }
+
+      function openPointMenu(ev) {
+        const dims = ensureCanvasSize();
+        const rect = mapCanvas.getBoundingClientRect();
+        const w = screenToWorld(ev.clientX - rect.left, ev.clientY - rect.top, dims);
+        const x = Math.round(w.x);
+        const z = Math.round(w.z);
+        showMapMenu(ev, `x ${x} / z ${z}`, [
+          { label: '先生がここへ移動', run: () => runMenuAction('/api/tp_point', { x, z, target: 'teacher' }, 'その場所へ移動しました') },
+          {
+            label: '全員をここへ集合',
+            run: () => {
+              if (!confirm(`全員を x ${x} / z ${z} へ移動させますか？`)) return;
+              runMenuAction('/api/tp_point', { x, z, target: 'all' }, '全員を移動させました');
+            }
+          }
+        ]);
+      }
+
+      document.addEventListener('pointerdown', ev => {
+        if (mapMenu && !mapMenu.contains(ev.target) && ev.target !== mapCanvas) hideMapMenu();
+      });
+      document.addEventListener('keydown', ev => { if (ev.key === 'Escape') hideMapMenu(); });
+
+      /* ---------- タイマー ---------- */
+      const timerBtn = document.getElementById('timerToggle');
+      const timerRemain = document.getElementById('timerRemain');
+
+      function updateTimerRemain() {
+        if (!timerRemain) return;
+        if (!state.timer) { timerRemain.hidden = true; return; }
+        const sec = Math.max(0, Math.ceil((state.timer.endAt - Date.now()) / 1000));
+        timerRemain.hidden = false;
+        timerRemain.textContent = `残り ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+        timerRemain.classList.toggle('warn', sec <= 180 && sec > 60);
+        timerRemain.classList.toggle('last', sec <= 60);
+      }
+      setInterval(updateTimerRemain, 250);
+
+      function refreshTimerUi() {
+        const running = !!state.timer;
+        if (timerBtn) {
+          timerBtn.innerHTML = icon('timer') + (running ? 'タイマー中止' : 'タイマー開始');
+          timerBtn.classList.toggle('active', running);
+        }
+        if (timerMinutesInput) timerMinutesInput.disabled = running;
+        updateTimerRemain();
+      }
+
+      if (timerBtn) timerBtn.addEventListener('click', async () => {
+        let result;
+        if (state.timer) {
+          if (!confirm('タイマーを中止しますか？')) return;
+          result = await postJson('/api/timer_stop');
+        } else {
+          const minutes = Number(timerMinutesInput ? timerMinutesInput.value : NaN);
+          if (!Number.isFinite(minutes) || minutes < 0.1 || minutes > 180) {
+            showToast('時間は 0.1〜180 分で入力してください。');
+            return;
+          }
+          result = await postJson('/api/timer_start', { minutes });
+        }
+        if (!result.ok) showToast(result.error);
+      });
+
+      /* ---------- お知らせ（定型文） ---------- */
+      const announceList = document.getElementById('announceList');
+      let announceKey = null;
+
+      function renderAnnouncements() {
+        if (!announceList) return;
+        const list = Array.isArray(state.settings.announcements) ? state.settings.announcements : [];
+        const key = JSON.stringify(list);
+        if (key === announceKey) return;
+        announceKey = key;
+        announceList.innerHTML = list.map((text, i) =>
+          `<button type="button" data-announce="${i}" title="全員の画面の中央に大きく表示します">${icon('announce')}${escapeHtml(text)}</button>`
+        ).join('');
+      }
+
+      async function sendAnnouncement(message, btn) {
+        if (btn) btn.disabled = true;
+        const result = await postJson('/api/announce', { message });
+        if (btn) btn.disabled = false;
+        if (!result.ok) showToast(result.error);
+        return result.ok;
+      }
+
+      if (announceList) announceList.addEventListener('click', ev => {
+        const btn = ev.target.closest('button[data-announce]');
+        if (!btn || btn.disabled) return;
+        const text = (state.settings.announcements || [])[Number(btn.dataset.announce)];
+        if (text) sendAnnouncement(text, btn);
+      });
+
+      const chatBigBtn = document.getElementById('chatBig');
+      if (chatBigBtn) chatBigBtn.addEventListener('click', async () => {
+        const input = document.getElementById('chatMsg');
+        const msg = input ? input.value.trim() : '';
+        if (!msg) return;
+        if (await sendAnnouncement(msg, chatBigBtn) && input) input.value = '';
+      });
+
+      // 文言の編集（Electron では prompt() が使えないので、専用の入力画面を出す）
+      const textsOverlay = document.getElementById('textsOverlay');
+      const textsAnnouncements = document.getElementById('textsAnnouncements');
+      const textsTimerStart = document.getElementById('textsTimerStart');
+      const textsTimerEnd = document.getElementById('textsTimerEnd');
+      document.getElementById('announceEdit')?.addEventListener('click', () => {
+        if (!textsOverlay) return;
+        textsAnnouncements.value = (state.settings.announcements || []).join('\n');
+        textsTimerStart.value = state.settings.timerStartText || '';
+        textsTimerEnd.value = state.settings.timerEndText || '';
+        textsOverlay.classList.remove('hide');
+      });
+      document.getElementById('textsCancel')?.addEventListener('click', () => textsOverlay.classList.add('hide'));
+      document.getElementById('textsSave')?.addEventListener('click', async () => {
+        const ok = await saveSettings({
+          announcements: textsAnnouncements.value.split('\n').map(s => s.trim()).filter(Boolean),
+          timerStartText: textsTimerStart.value.trim(),
+          timerEndText: textsTimerEnd.value.trim()
+        });
+        if (ok) textsOverlay.classList.add('hide');
+      });
+
+      /* ---------- 授業準備 ---------- */
+      const prepButtons = Array.from(document.querySelectorAll('button[data-prep]'));
+
+      function refreshPrepUi() {
+        prepButtons.forEach(btn => {
+          const value = state.rules[btn.dataset.prep];
+          const sub = btn.querySelector('.sub');
+          if (sub) {
+            sub.textContent = value === true ? 'ON' : value === false ? 'OFF' : '—';
+            sub.classList.toggle('on', value === true);
+          }
+          btn.classList.toggle('active', value === true);
+        });
+      }
+
+      prepButtons.forEach(btn => btn.addEventListener('click', async () => {
+        const key = btn.dataset.prep;
+        btn.disabled = true;
+        const result = await postJson('/api/prep', { key, on: state.rules[key] !== true });
+        btn.disabled = false;
+        if (!result.ok) showToast(result.error);
+      }));
+
+      const prepAllBtn = document.getElementById('prepAll');
+      if (prepAllBtn) prepAllBtn.addEventListener('click', async () => {
+        prepAllBtn.disabled = true;
+        const result = await postJson('/api/prep', { key: 'all', on: true });
+        prepAllBtn.disabled = false;
+        if (!result.ok) showToast(result.error);
+      });
+
+      refreshTimerUi();
+      refreshPrepUi();
 
       window.addEventListener('unhandledrejection', (ev) => {
         ev.preventDefault();

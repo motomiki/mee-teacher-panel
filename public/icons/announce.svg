@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges">
+  <title>お知らせ（吹き出し）</title>
+  <path fill="#1b1d22" d="M2 2h12v1h-12zM1 3h1v7h-1zM14 3h1v7h-1zM2 10h2v1h-2zM6 10h8v1h-8zM3 11h1v2h-1zM5 11h1v1h-1zM4 12h1v1h-1z"/>
+  <path fill="#ffffff" d="M2 3h12v1h-12zM2 4h2v1h-2zM12 4h2v1h-2zM2 5h12v1h-12zM2 6h2v1h-2zM10 6h4v1h-4zM2 7h12v3h-12zM4 10h2v1h-2zM4 11h1v1h-1z"/>
+  <path fill="#2f6fde" d="M4 4h8v1h-8zM4 6h6v1h-6z"/>
+</svg>

@@ -112,6 +112,8 @@ function readVarint(buf, pos) {
   let result = 0;
   let mul = 1;
   for (;;) {
+    // 壊れたデータで末尾を越えると undefined になり、終了条件を満たさず止まらなくなる
+    if (pos >= buf.length) throw new Error('varint が途中で切れています');
     const b = buf[pos++];
     result += (b & 0x7f) * mul;
     if (b < 0x80) return [result, pos];
@@ -197,14 +199,19 @@ function scanTable(file, targets, onEntry) {
       const lo = prev;
       prev = Buffer.from(sep);
       if (targets && !anyInRange(targets, lo, sep)) continue;
-      let p = 0, off, len;
-      [off, p] = readVarint(handle, p);
-      [len, p] = readVarint(handle, p);
-      const block = readBlock(fd, off, len);
-      for (const [ikey, value] of blockEntries(block)) {
-        if (ikey.length < 8) continue;
-        const { userKey, seq, type } = splitInternalKey(ikey);
-        onEntry(userKey, value, seq, type === 1);
+      // 1 ブロックが壊れていても、同じファイルの残りは読み続ける
+      try {
+        let p = 0, off, len;
+        [off, p] = readVarint(handle, p);
+        [len, p] = readVarint(handle, p);
+        const block = readBlock(fd, off, len);
+        for (const [ikey, value] of blockEntries(block)) {
+          if (ikey.length < 8) continue;
+          const { userKey, seq, type } = splitInternalKey(ikey);
+          onEntry(userKey, value, seq, type === 1);
+        }
+      } catch (err) {
+        console.warn('[worldmap] ブロックを読めません:', path.basename(file), err.message);
       }
     }
   } finally {
@@ -432,16 +439,28 @@ function encodePng(rgba, width, height) {
    地図の生成
    ========================= */
 // db フォルダ内の全ファイルを読む
+// ゲームが動いている間は、整理（compaction）でファイルが入れ替わることがある。
+// 読んでいる途中で消えたファイルがあれば、一覧を取り直して新しく増えたファイルだけ読む（1回だけ）。
+// 同じキーはシーケンス番号の新しい方が採用されるので、重複して読んでも結果は変わらない
 function scanDb(dbDir, targets, onEntry) {
-  for (const name of fs.readdirSync(dbDir)) {
-    const file = path.join(dbDir, name);
-    try {
-      if (name.endsWith('.ldb') || name.endsWith('.sst')) scanTable(file, targets, onEntry);
-      else if (name.endsWith('.log')) scanLog(file, onEntry);
-    } catch (err) {
-      console.warn('[worldmap] 読み込みに失敗:', name, err.message);
+  const done = new Set();
+  const pass = () => {
+    let vanished = false;
+    for (const name of fs.readdirSync(dbDir)) {
+      if (done.has(name)) continue;
+      done.add(name);
+      const file = path.join(dbDir, name);
+      try {
+        if (name.endsWith('.ldb') || name.endsWith('.sst')) scanTable(file, targets, onEntry);
+        else if (name.endsWith('.log')) scanLog(file, onEntry);
+      } catch (err) {
+        if (err.code === 'ENOENT') vanished = true;
+        console.warn('[worldmap] 読み込みに失敗:', name, err.message);
+      }
     }
-  }
+    return vanished;
+  };
+  if (pass()) pass();
 }
 
 // 地形が保存されているチャンクの範囲（ブロック座標）。保存済みのチャンクがなければ null
@@ -463,7 +482,7 @@ export function scanChunkExtent(worldPath) {
     cz0 = Math.min(cz0, rec.cz); cz1 = Math.max(cz1, rec.cz);
   }
   if (!seen.size) return null;
-  return { minX: cx0 * 16, minZ: cz0 * 16, maxX: cx1 * 16 + 15, maxZ: cz1 * 16 + 15, chunkCount: seen.size };
+  return { minX: cx0 * 16, minZ: cz0 * 16, maxX: cx1 * 16 + 15, maxZ: cz1 * 16 + 15, chunkCount: seen.size, chunks: [...seen] };
 }
 
 // 保存済みの地形すべてが入る範囲を決める。1辺が maxSize を超える場合は center を含むように切り詰める
@@ -596,7 +615,8 @@ export function renderWorldMap({ worldPath, minX, minZ, size, width = size, heig
     }
   }
 
-  return { png: encodePng(rgba, width, height), minX, minZ, width, height, chunkCount };
+  // savedChunks: 地形が保存されているチャンク（"cx,cz"）。自動記録で「もう保存済み」の判定に使う
+  return { png: encodePng(rgba, width, height), minX, minZ, width, height, chunkCount, savedChunks: [...chunks.keys()] };
 }
 
 // 範囲を保存済みの地形から自動で決めて描く。center は範囲を切り詰めるときの基準
@@ -604,7 +624,9 @@ export function renderWorldMapAuto({ worldPath, center }) {
   const extent = scanChunkExtent(worldPath);
   if (!extent) return { chunkCount: 0, extent: null };
   const range = autoRange(extent, center);
-  return { ...renderWorldMap({ worldPath, ...range }), extent };
+  const { chunks, ...extentInfo } = extent;
+  // 範囲を切り詰めた場合でも、保存済みチャンクはワールド全体の分を返す
+  return { ...renderWorldMap({ worldPath, ...range }), extent: extentInfo, savedChunks: chunks };
 }
 
 /* =========================
